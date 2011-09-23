@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Data.EntityClient;
 using System.Data.Objects;
+using System.Data.SQLite;
 using System.Text;
 using System.Transactions;
 
@@ -50,7 +52,7 @@ namespace testlinq
                   {
                       int pageSize = 0;
 
-                      if (args.Length > 1)
+                      if ((args.Length > 1) && !String.IsNullOrEmpty(args[1]))
                       {
                           arg = args[1];
 
@@ -92,7 +94,7 @@ namespace testlinq
                   {
                       bool value = false;
 
-                      if (args.Length > 1)
+                      if ((args.Length > 1) && !String.IsNullOrEmpty(args[1]))
                       {
                           if (!bool.TryParse(args[1], out value))
                           {
@@ -105,6 +107,58 @@ namespace testlinq
                       }
 
                       return EFTransactionTest(value);
+                  }
+              case "datetime":
+                  {
+                      SQLiteDateFormats dateTimeFormat = SQLiteDateFormats.Default;
+                      string queryString = null;
+                      DateTime? dateTime = null;
+
+                      if ((args.Length > 1) && !String.IsNullOrEmpty(args[1]))
+                      {
+                          try
+                          {
+                              dateTimeFormat = (SQLiteDateFormats)Enum.Parse(
+                                  typeof(SQLiteDateFormats), args[1], true);
+                          }
+                          catch
+                          {
+                              Console.WriteLine(
+                                  "cannot parse \"{0}\" as a date/time format",
+                                  args[1]);
+
+                              return 1;
+                          }
+                      }
+
+                      if (args.Length > 2)
+                      {
+                          queryString = args[2];
+
+                          if (queryString != null)
+                              queryString = queryString.Trim();
+                      }
+
+                      if ((args.Length > 3) && !String.IsNullOrEmpty(args[3]))
+                      {
+                          DateTime dateTimeValue;
+
+                          if (DateTime.TryParse(args[3], out dateTimeValue))
+                          {
+                              dateTime = DateTime.SpecifyKind(
+                                  dateTimeValue, DateTimeKind.Utc);
+                          }
+                          else
+                          {
+                              Console.WriteLine(
+                                  "cannot parse \"{0}\" as a date/time",
+                                  args[3]);
+
+                              return 1;
+                          }
+                      }
+
+                      return DateTimeTest(dateTimeFormat, queryString, dateTime);
                   }
               default:
                   {
@@ -285,6 +339,59 @@ namespace testlinq
 
                       once = true;
                   }
+              }
+          }
+
+          return 0;
+      }
+
+      //
+      // NOTE: Used to test the various DateTime methods.
+      //
+      private static int DateTimeTest(
+          SQLiteDateFormats dateTimeFormat,
+          string queryString,
+          DateTime? dateTime
+          )
+      {
+          using (northwindEFEntities db = new northwindEFEntities())
+          {
+              EntityConnection connection = db.Connection as EntityConnection;
+
+              if (connection == null)
+              {
+                  Console.WriteLine("not an entity connection");
+                  return 1;
+              }
+
+              SQLiteConnection storeConnection =
+                  connection.StoreConnection as SQLiteConnection;
+
+              if (storeConnection == null)
+              {
+                  Console.WriteLine("not a SQLite store connection");
+                  return 1;
+              }
+
+              connection.Open(); /* NOTE: Force open now. */
+              storeConnection.DateTimeFormat = dateTimeFormat;
+
+              bool once = false;
+
+              ObjectParameter[] parameters = (dateTime != null) ?
+                  new ObjectParameter[] { new ObjectParameter("dt", dateTime) } :
+                  new ObjectParameter[] { };
+
+              var query = db.CreateQuery<Orders>(queryString, parameters);
+
+              foreach (Orders orders in query)
+              {
+                  if (once)
+                      Console.Write(' ');
+
+                  Console.Write(orders.OrderID);
+
+                  once = true;
               }
           }
 

@@ -42,6 +42,15 @@ namespace System.Data.SQLite
     }
 
     /// <summary>
+    /// Returns or sets the date/time format in use for this instance.
+    /// </summary>
+    internal SQLiteDateFormats DateTimeFormat
+    {
+        get { return _dateFormat; }
+        set { _dateFormat = value; }
+    }
+
+    /// <summary>
     /// Returns manifest information for the provider
     /// </summary>
     /// <param name="informationType">The name of the information to be retrieved.</param>

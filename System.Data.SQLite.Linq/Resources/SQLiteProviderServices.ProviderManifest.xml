@@ -691,6 +691,40 @@ PROCESS
       <Parameter Name="date" Type="String" Mode="In" />
     </Function>
 
+    <!-- TOLOCALTIME( date )
+            date: smalldatetime, datetime
+            returns: datetime
+        -->
+    <Function Name="TOLOCALTIME" BuiltIn="true">
+      <ReturnType Type="DateTime" />
+      <Parameter Name="date" Type="DateTime" Mode="In" />
+    </Function>
+    <Function Name="TOLOCALTIME" BuiltIn="true">
+      <ReturnType Type="DateTime" />
+      <Parameter Name="date" Type="DateTimeOffset" Mode="In" />
+    </Function>
+    <Function Name="TOLOCALTIME" BuiltIn="true">
+      <ReturnType Type="DateTime" />
+      <Parameter Name="date" Type="String" Mode="In" />
+    </Function>
+
+    <!-- TOUNIVERSALTIME( date )
+            date: smalldatetime, datetime
+            returns: datetime
+        -->
+    <Function Name="TOUNIVERSALTIME" BuiltIn="true">
+      <ReturnType Type="DateTime" />
+      <Parameter Name="date" Type="DateTime" Mode="In" />
+    </Function>
+    <Function Name="TOUNIVERSALTIME" BuiltIn="true">
+      <ReturnType Type="DateTime" />
+      <Parameter Name="date" Type="DateTimeOffset" Mode="In" />
+    </Function>
+    <Function Name="TOUNIVERSALTIME" BuiltIn="true">
+      <ReturnType Type="DateTime" />
+      <Parameter Name="date" Type="String" Mode="In" />
+    </Function>
+
     <!-- GETDATE()
             returns: datetime   
         -->

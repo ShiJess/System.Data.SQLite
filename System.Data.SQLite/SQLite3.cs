@@ -408,7 +408,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_DateTime(SQLiteStatement stmt, int index, DateTime dt)
     {
-      byte[] b = ToUTF8(dt);
+      byte[] b = ToBindUTF8(dt);
       int n = UnsafeNativeMethods.sqlite3_bind_text(stmt._sqlite_stmt, index, b, b.Length - 1, (IntPtr)(-1));
       if (n > 0) throw new SQLiteException(n, SQLiteLastError());
     }

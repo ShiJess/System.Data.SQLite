@@ -1004,6 +1004,29 @@ namespace System.Data.SQLite
     }
 
     /// <summary>
+    /// Returns or sets the date/time format currently in use for this connection.
+    /// </summary>
+#if !PLATFORM_COMPACTFRAMEWORK
+    [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+#endif
+    public SQLiteDateFormats DateTimeFormat
+    {
+        get {
+            if (_sql == null)
+                throw new InvalidOperationException("Database connection not valid for getting date/time format.");
+
+            return _sql.DateTimeFormat;
+        }
+        set
+        {
+            if (_sql == null)
+                throw new InvalidOperationException("Database connection not valid for setting date/time format.");
+
+            _sql.DateTimeFormat = value;
+        }
+    }
+
+    /// <summary>
     /// Returns the version of the underlying SQLite database engine
     /// </summary>
     public static string SQLiteVersion

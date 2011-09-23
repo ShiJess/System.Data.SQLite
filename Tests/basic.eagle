@@ -742,10 +742,10 @@ runTest {test basic-1.13 {DateTime using invariant culture} -setup {
 -result [subst {{1 {{x 1} {y2 {Wednesday, 16 December 2009}}}} {2 {{x 2} {y2\
 12:00:00}}} {3 {{x 3} {y2 {Wednesday, 16 December 2009 12:00:00}}}} {4 {{x 4}\
 {y2 12/16/2009}}} {5 {{x 5} {y2 12:00}}} {6 {{x 6} {y2 {12/16/2009 12:00}}}} {7\
-{{x 7} {y2 2009-12-16T00:00:00.0000000Z}}} {8 {{x 8} {y2\
-${date}T12:00:00.0000000Z}}} {9 {{x 9} {y2 2009-12-16T12:00:00.0000000Z}}}\
-{10 {{x 10} {y2 2009-12-16T00:00:00.0000000Z}}} {11 {{x 11} {y2\
-${date}T12:00:00.0000000Z}}} {12 {{x 12} {y2 2009-12-16T12:00:00.0000000Z}}}}]}
+{{x 7} {y2 2009-12-16T00:00:00.000}}} {8 {{x 8} {y2\
+${date}T12:00:00.000}}} {9 {{x 9} {y2 2009-12-16T12:00:00.000}}} {10 {{x 10}\
+{y2 2009-12-16T00:00:00.000}}} {11 {{x 11} {y2 ${date}T12:00:00.000}}} {12 {{x\
+12} {y2 2009-12-16T12:00:00.000}}}}]}
 
 ###############################################################################
 
@@ -803,10 +803,66 @@ runTest {test basic-1.14 {DateTime using current culture} -setup {
 -result [subst {{1 {{x 1} {y2 {Wednesday, 16 December 2009}}}} {2 {{x 2} {y2\
 12:00:00}}} {3 {{x 3} {y2 {Wednesday, 16 December 2009 12:00:00}}}} {4 {{x 4}\
 {y2 12/16/2009}}} {5 {{x 5} {y2 12:00}}} {6 {{x 6} {y2 {12/16/2009 12:00}}}} {7\
-{{x 7} {y2 2009-12-16T00:00:00.0000000Z}}} {8 {{x 8} {y2\
-${date}T12:00:00.0000000Z}}} {9 {{x 9} {y2 2009-12-16T12:00:00.0000000Z}}}\
-{10 {{x 10} {y2 2009-12-16T00:00:00.0000000Z}}} {11 {{x 11} {y2\
-${date}T12:00:00.0000000Z}}} {12 {{x 12} {y2 2009-12-16T12:00:00.0000000Z}}}}]}
+{{x 7} {y2 2009-12-16T00:00:00.000}}} {8 {{x 8} {y2\
+${date}T12:00:00.000}}} {9 {{x 9} {y2 2009-12-16T12:00:00.000}}} {10 {{x 10}\
+{y2 2009-12-16T00:00:00.000}}} {11 {{x 11} {y2 ${date}T12:00:00.000}}} {12 {{x\
+12} {y2 2009-12-16T12:00:00.000}}}}]}
+
+###############################################################################
+
+runTest {test basic-1.15 {other date/time functions for LINQ} -setup {
+  set formats [list Ticks ISO8601 JulianDay UnixEpoch \
+                    InvariantCulture CurrentCulture]
+
+  # 1996-07-04 00:00:00|1996-08-01 00:00:00
+  # 1998-05-06 00:00:00|1998-06-03 00:00:00
+  # 11078|ALFKI|1|2003-01-02 04:05:06.789|
+  # 2009-08-07 06:05:04.321|1999-12-25 23:59:42.654|0||||||
+
+  set prefix "SELECT VALUE o FROM Orders AS o WHERE"
+
+  set queries [list \
+      "SQLite.GetDate() >= SQLite.ToLocalTime(@dt) AND o.OrderID = 11078;" \
+      "SQLite.GetUtcDate() >= @dt AND o.OrderID = 11078;" \
+      "Year(SQLite.GetDate()) == Year(@dt) AND o.OrderID = 11078;" \
+      "Month(SQLite.GetDate()) == Month(@dt) AND o.OrderID = 11078;" \
+      "Day(SQLite.GetDate()) == Day(@dt) AND o.OrderID = 11078;" \
+      "Hour(o.OrderDate) == 4 AND o.OrderID = 11078;" \
+      "Minute(o.OrderDate) == 5 AND o.OrderID = 11078;" \
+      "Second(o.OrderDate) == 6 AND o.OrderID = 11078;"]
+} -body {
+  set result [list]
+
+  foreach format $formats {
+    foreach query $queries {
+      set code [catch {
+        testExec $testLinqExeFile [list -eventflags Wait -directory \
+        [file dirname $testLinqExeFile] -nocarriagereturns -stdout output \
+        -success 0] -dateTime [appendArgs \" $format \"] [appendArgs \" \
+        $prefix " " $query \"] [appendArgs \" \
+        [expr {[string first @dt $query] != -1 ? $date : ""}] \"]
+      } error]
+
+      tlog "---- BEGIN STDOUT OUTPUT\n"
+      tlog $output
+      tlog "\n---- END STDOUT OUTPUT\n"
+
+      lappend result $code
+
+      if {$code == 0} then {
+        lappend result [string trim $output]
+      } else {
+        lappend result [string trim $error]
+      }
+    }
+  }
+
+  set result
+} -cleanup {
+  unset -nocomplain prefix format formats query queries
+  unset -nocomplain code output error result
+} -constraints {eagle file_testlinq.exe file_northwindEF.db} \
+-result {}}
 
 ###############################################################################
 

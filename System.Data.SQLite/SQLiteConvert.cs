@@ -25,6 +25,11 @@ namespace System.Data.SQLite
         new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
     /// <summary>
+    /// The most complete human-readable time string format natively understood by SQLite.
+    /// </summary>
+    private const string BindFormat = "yyyy-MM-ddTHH:mm:ss.fff";
+
+    /// <summary>
     /// The format string for DateTime values when using the InvariantCulture or CurrentCulture formats.
     /// </summary>
     private const string FullFormat = "yyyy-MM-ddTHH:mm:ss.fffffffK";
@@ -69,6 +74,17 @@ namespace System.Data.SQLite
       _datetimeFormat = fmt;
     }
 
+    #region Public Properties
+    /// <summary>
+    /// Returns or sets the date/time format currently in use for this instance.
+    /// </summary>
+    public SQLiteDateFormats DateTimeFormat
+    {
+        get { return _datetimeFormat; }
+        set { _datetimeFormat = value; }
+    }
+    #endregion
+
     #region UTF-8 Conversion Functions
     /// <summary>
     /// Converts a string to a UTF-8 encoded byte array sized to include a null-terminating character.
@@ -99,6 +115,20 @@ namespace System.Data.SQLite
     public byte[] ToUTF8(DateTime dateTimeValue)
     {
       return ToUTF8(ToString(dateTimeValue));
+    }
+
+    /// <summary>
+    /// Convert a DateTime to a UTF-8 encoded, zero-terminated byte array.
+    /// </summary>
+    /// <remarks>
+    /// This function is a convenience function, which first calls ToBindString() on the DateTime, and then calls ToUTF8() with
+    /// the string result.
+    /// </remarks>
+    /// <param name="dateTimeValue">The DateTime to convert.</param>
+    /// <returns>The UTF-8 encoded string, including a 0 terminating byte at the end of the array.</returns>
+    public byte[] ToBindUTF8(DateTime dateTimeValue)
+    {
+      return ToUTF8(ToBindString(dateTimeValue));
     }
 
     /// <summary>
@@ -161,6 +191,16 @@ namespace System.Data.SQLite
     /// <returns>A DateTime value</returns>
     public DateTime ToDateTime(string dateText)
     {
+      //
+      // NOTE: First, try to interpret the string as a correctly formatted date.
+      //
+      DateTime result;
+
+      if (DateTime.TryParseExact(dateText, _datetimeFormats, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out result))
+      {
+        return result;
+      }
+
       switch (_datetimeFormat)
       {
         case SQLiteDateFormats.Ticks:
@@ -196,6 +236,16 @@ namespace System.Data.SQLite
     public double ToJulianDay(DateTime value)
     {
       return value.ToOADate() + 2415018.5;
+    }
+
+    /// <summary>
+    /// Converts a DateTime to a string value suitable for binding to a query parameter.
+    /// </summary>
+    /// <param name="dateValue">The DateTime value to convert</param>
+    /// <returns>An ISO8601 formatted date/time string in the invariant culture.</returns>
+    public string ToBindString(DateTime dateValue)
+    {
+      return dateValue.ToString(BindFormat, CultureInfo.InvariantCulture);
     }
 
     /// <summary>

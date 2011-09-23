@@ -318,6 +318,8 @@ namespace System.Data.SQLite
       functionHandlers.Add("DatePart", HandleDatepartDateFunction);
       functionHandlers.Add("GETDATE", HandleGetDateFunction);
       functionHandlers.Add("GETUTCDATE", HandleGetUtcDateFunction);
+      functionHandlers.Add("TOLOCALTIME", HandleToLocalTimeFunction);
+      functionHandlers.Add("TOUNIVERSALTIME", HandleToUniversalTimeFunction);
       return functionHandlers;
     }
 
@@ -2662,13 +2664,20 @@ namespace System.Data.SQLite
       switch (sqlgen._manifest._dateFormat)
       {
         case SQLiteDateFormats.Ticks:
-          result.Append("(STRFTIME('%s', 'now') * 10000000 + 621355968000000000)");
+          result.Append("(STRFTIME('%s', 'now', 'localtime') * 10000000 + 621355968000000000)");
           break;
         case SQLiteDateFormats.JulianDay:
-          result.Append("CAST(STRFTIME('%J', 'now') AS double)");
+          result.Append("CAST(STRFTIME('%J', 'now', 'localtime') AS double)");
+          break;
+        case SQLiteDateFormats.UnixEpoch:
+          result.Append("STRFTIME('%s', 'now', 'localtime')");
+          break;
+        case SQLiteDateFormats.InvariantCulture:
+        case SQLiteDateFormats.CurrentCulture:
+          result.Append("STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'now', 'localtime')");
           break;
         default:
-          result.Append("STRFTIME('%Y-%m-%d %H:%M:%S', 'now')");
+          result.Append("STRFTIME('%Y-%m-%d %H:%M:%S', 'now', 'localtime')");
           break;
       }
 
@@ -2683,17 +2692,80 @@ namespace System.Data.SQLite
       switch (sqlgen._manifest._dateFormat)
       {
         case SQLiteDateFormats.Ticks:
-          result.Append("(STRFTIME('%s', 'now', 'utc') * 10000000 + 621355968000000000)");
+          result.Append("(STRFTIME('%s', 'now') * 10000000 + 621355968000000000)");
           break;
         case SQLiteDateFormats.JulianDay:
-          result.Append("CAST(STRFTIME('%J', 'now', 'utc') AS double)");
+          result.Append("CAST(STRFTIME('%J', 'now') AS double)");
+          break;
+        case SQLiteDateFormats.UnixEpoch:
+          result.Append("STRFTIME('%s', 'now')");
+          break;
+        case SQLiteDateFormats.InvariantCulture:
+        case SQLiteDateFormats.CurrentCulture:
+          result.Append("STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'now')");
           break;
         default:
-          result.Append("STRFTIME('%Y-%m-%d %H:%M:%S', 'now', 'utc')");
+          result.Append("STRFTIME('%Y-%m-%d %H:%M:%S', 'now')");
           break;
       }
 
       return result;
+    }
+
+    private static ISqlFragment HandleToUniversalTimeFunction(SqlGenerator sqlgen, DbFunctionExpression e)
+    {
+        SqlBuilder result = new SqlBuilder();
+        Debug.Assert(e.Arguments.Count == 1, "Canonical touniversaltime function should have exactly one argument");
+
+        switch (sqlgen._manifest._dateFormat)
+        {
+            case SQLiteDateFormats.Ticks:
+                result.Append(String.Format("(STRFTIME('%s', {0}, 'utc') * 10000000 + 621355968000000000)", e.Arguments[0].Accept(sqlgen)));
+                break;
+            case SQLiteDateFormats.JulianDay:
+                result.Append(String.Format("CAST(STRFTIME('%J', {0}, 'utc') AS double)", e.Arguments[0].Accept(sqlgen)));
+                break;
+            case SQLiteDateFormats.UnixEpoch:
+                result.Append(String.Format("STRFTIME('%s', {0}, 'utc')", e.Arguments[0].Accept(sqlgen)));
+                break;
+            case SQLiteDateFormats.InvariantCulture:
+            case SQLiteDateFormats.CurrentCulture:
+                result.Append(String.Format("STRFTIME('%Y-%m-%dT%H:%M:%fZ', {0}, 'utc')", e.Arguments[0].Accept(sqlgen)));
+                break;
+            default:
+                result.Append(String.Format("STRFTIME('%Y-%m-%d %H:%M:%S', {0}, 'utc')", e.Arguments[0].Accept(sqlgen)));
+                break;
+        }
+
+        return result;
+    }
+
+    private static ISqlFragment HandleToLocalTimeFunction(SqlGenerator sqlgen, DbFunctionExpression e)
+    {
+        SqlBuilder result = new SqlBuilder();
+        Debug.Assert(e.Arguments.Count == 1, "Canonical tolocaltime function should have exactly one argument");
+
+        switch (sqlgen._manifest._dateFormat)
+        {
+            case SQLiteDateFormats.Ticks:
+                result.Append(String.Format("(STRFTIME('%s', {0}, 'localtime') * 10000000 + 621355968000000000)", e.Arguments[0].Accept(sqlgen)));
+                break;
+            case SQLiteDateFormats.JulianDay:
+                result.Append(String.Format("CAST(STRFTIME('%J', {0}, 'localtime') AS double)", e.Arguments[0].Accept(sqlgen)));
+                break;
+            case SQLiteDateFormats.UnixEpoch:
+                result.Append(String.Format("STRFTIME('%s', {0}, 'localtime')", e.Arguments[0].Accept(sqlgen)));
+                break;
+            case SQLiteDateFormats.InvariantCulture:
+            case SQLiteDateFormats.CurrentCulture:
+                result.Append(String.Format("STRFTIME('%Y-%m-%dT%H:%M:%fZ', {0}, 'localtime')", e.Arguments[0].Accept(sqlgen)));
+                break;
+            default:
+                result.Append(String.Format("STRFTIME('%Y-%m-%d %H:%M:%S', {0}, 'localtime')", e.Arguments[0].Accept(sqlgen)));
+                break;
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -2744,6 +2816,9 @@ namespace System.Data.SQLite
           case SQLiteDateFormats.Ticks:
             result.Append(String.Format("(({0} - 621355968000000000) / 10000000.0)", e.Arguments[1].Accept(sqlgen)));
             break;
+          case SQLiteDateFormats.UnixEpoch:
+            result.Append(String.Format("{0}, 'unixepoch'", e.Arguments[1].Accept(sqlgen)));
+            break;
           default:
             result.Append(e.Arguments[1].Accept(sqlgen));
             break;
@@ -2759,6 +2834,9 @@ namespace System.Data.SQLite
         {
           case SQLiteDateFormats.Ticks:
             result.Append(String.Format("(({0} - 621355968000000000) / 10000000.0)", e.Arguments[1].Accept(sqlgen)));
+            break;
+          case SQLiteDateFormats.UnixEpoch:
+            result.Append(String.Format("{0}, 'unixepoch'", e.Arguments[1].Accept(sqlgen)));
             break;
           default:
             result.Append(e.Arguments[1].Accept(sqlgen));
@@ -2790,6 +2868,9 @@ namespace System.Data.SQLite
         case SQLiteDateFormats.JulianDay:
           result.Append(String.Format("CAST(STRFTIME('%J', JULIANDAY({1}) + ({0} / 86400.0)) AS double)", e.Arguments[0].Accept(sqlgen), e.Arguments[1].Accept(sqlgen)));
           break;
+        case SQLiteDateFormats.UnixEpoch:
+          result.Append(String.Format("(STRFTIME('%s', JULIANDAY({1}) + ({0} / 86400.0)))", e.Arguments[0].Accept(sqlgen), e.Arguments[1].Accept(sqlgen)));
+          break;
         default:
           result.Append(String.Format("STRFTIME('%Y-%m-%d %H:%M:%S', JULIANDAY({1}) + ({0} / 86400.0))", e.Arguments[0].Accept(sqlgen), e.Arguments[1].Accept(sqlgen)));
           break;
@@ -2813,6 +2894,9 @@ namespace System.Data.SQLite
       {
         case SQLiteDateFormats.Ticks:
           result.Append(String.Format("CAST((({0} - 621355968000000000) / 10000000.0)  - (({1} - 621355968000000000) / 10000000.0) * 86400.0 AS integer)", e.Arguments[0].Accept(sqlgen), e.Arguments[1].Accept(sqlgen)));
+          break;
+        case SQLiteDateFormats.UnixEpoch:
+          result.Append(String.Format("CAST(({0} - {1}) * 86400.0 AS integer)", e.Arguments[0].Accept(sqlgen), e.Arguments[1].Accept(sqlgen)));
           break;
         default:
           result.Append(String.Format("CAST((JULIANDAY({1}) - JULIANDAY({0})) * 86400.0 AS integer)", e.Arguments[0].Accept(sqlgen), e.Arguments[1].Accept(sqlgen)));
@@ -2849,6 +2933,9 @@ namespace System.Data.SQLite
       {
         case SQLiteDateFormats.Ticks:
           result.Append(String.Format("(({0} - 621355968000000000) / 10000000.0)", e.Arguments[0].Accept(sqlgen)));
+          break;
+        case SQLiteDateFormats.UnixEpoch:
+          result.Append(String.Format("{0}, 'unixepoch'", e.Arguments[0].Accept(sqlgen)));
           break;
         default:
           result.Append(e.Arguments[0].Accept(sqlgen));
