@@ -1,0 +1,46 @@
+###############################################################################
+#
+# tkt-3b9dcdc32d.eagle --
+#
+# Written by Joe Mistachkin.
+# Released to the public domain, use at your own risk!
+#
+###############################################################################
+
+package require Eagle
+package require EagleLibrary
+package require EagleTest
+
+runTestPrologue
+
+###############################################################################
+
+package require System.Data.SQLite.Test
+runSQLiteTestPrologue
+
+###############################################################################
+
+runTest {test tkt-3b9dcdc32d-1.1 {range of REAL type} -setup {
+  setupDb [set fileName tkt-3b9dcdc32d-1.1.db]
+} -body {
+  sql execute $db "CREATE TABLE t1(x INTEGER, y BLOB NULL, z BLOB NULL);"
+  sql execute $db "INSERT INTO t1 (x) VALUES(1);"
+  sql execute $db \
+      "UPDATE t1 SET y = ZEROBLOB(10 * 1024 * 1024) WHERE rowid = 1;"
+
+  sql execute $db "UPDATE t1 SET z = ZEROBLOB(10) WHERE rowid = 1;"
+
+  sql execute -execute reader -format list $db \
+      "SELECT x, LENGTH(y), LENGTH(z) FROM t1 ORDER BY x;"
+} -cleanup {
+  cleanupDb $fileName
+
+  unset -nocomplain db fileName
+} -constraints \
+{eagle monoBug28 command.sql compile.DATA SQLite System.Data.SQLite} -result \
+{1 10485760 10}}
+
+###############################################################################
+
+runSQLiteTestEpilogue
+runTestEpilogue
