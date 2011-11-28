@@ -103,7 +103,6 @@ runTest {test tkt-3b9dcdc32d-1.2 {ZEROBLOB leak} -setup {
               "Data Source=${dataSource};"))
           {
             connection.Open();
-            connection.LogMessage(0, "Connection opened.");
 
             SQLiteCommand command1 = new SQLiteCommand("${sql(1)}",
                 connection);
