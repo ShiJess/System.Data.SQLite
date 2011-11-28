@@ -20,25 +20,139 @@ runSQLiteTestPrologue
 
 ###############################################################################
 
-runTest {test tkt-3b9dcdc32d-1.1 {range of REAL type} -setup {
+runTest {test tkt-3b9dcdc32d-1.1 {ZEROBLOB memory leak} -setup {
+  set memory_used(before) [reportSQLiteResources stdout]
   setupDb [set fileName tkt-3b9dcdc32d-1.1.db]
 } -body {
   sql execute $db "CREATE TABLE t1(x INTEGER, y BLOB NULL, z BLOB NULL);"
-  sql execute $db "INSERT INTO t1 (x) VALUES(1);"
-  sql execute $db \
-      "UPDATE t1 SET y = ZEROBLOB(10 * 1024 * 1024) WHERE rowid = 1;"
 
-  sql execute $db "UPDATE t1 SET z = ZEROBLOB(10) WHERE rowid = 1;"
+  for {set i 1} {$i < 10} {incr i} {
+    sql execute $db "INSERT INTO t1 (x) VALUES(?);" \
+        [list param1 String $i]
 
-  sql execute -execute reader -format list $db \
-      "SELECT x, LENGTH(y), LENGTH(z) FROM t1 ORDER BY x;"
+    sql execute $db \
+        "UPDATE t1 SET y = ZEROBLOB(10 * 1024 * 1024) WHERE rowid = ?;" \
+        [list param1 String $i]
+
+    sql execute $db "UPDATE t1 SET z = ZEROBLOB(10) WHERE rowid = ?;" \
+        [list param1 String $i]
+  }
+
+  set result [sql execute -execute reader -format list $db \
+      "SELECT x, LENGTH(y), LENGTH(z) FROM t1 ORDER BY x;"]
+
+  cleanupDb $fileName; unset -nocomplain db fileName
+  set memory_used(after) [reportSQLiteResources stdout]
+
+  list [expr {$memory_used(after) - $memory_used(before)}] $result
+} -cleanup {
+  if {[info exists fileName]} then {
+    cleanupDb $fileName
+  }
+
+  unset -nocomplain memory_used db fileName
+} -constraints \
+{eagle monoBug28 command.sql compile.DATA SQLite System.Data.SQLite} -result \
+{0 {1 10485760 10 2 10485760 10 3 10485760 10 4 10485760 10 5 10485760 10 6\
+10485760 10 7 10485760 10 8 10485760 10 9 10485760 10}}}
+
+###############################################################################
+
+set memory_used(before) [reportSQLiteResources stdout]
+
+###############################################################################
+
+runTest {test tkt-3b9dcdc32d-1.2 {ZEROBLOB leak} -setup {
+  set fileName tkt-3b9dcdc32d-1.2.db
+} -body {
+  set id [object invoke Interpreter.GetActive NextId]
+  set dataSource [file join [getTemporaryPath] $fileName]
+  set name [file rootname [file tail $fileName]]
+
+  set sql(1) { \
+    CREATE TABLE t1(x INTEGER, y BLOB NULL, z BLOB NULL); \
+  }
+
+  set sql(2) { \
+    INSERT INTO t1 (x) VALUES(10); \
+  }
+
+  set sql(3) { \
+    UPDATE t1 SET y = ZEROBLOB(10 * 1024 * 1024) WHERE rowid = 1; \
+  }
+
+  set sql(4) { \
+    UPDATE t1 SET z = ZEROBLOB(10) WHERE rowid = 1; \
+  }
+
+  unset -nocomplain results errors
+
+  set code [compileCSharpWith [subst {
+    using System;
+    using System.Data.SQLite;
+    using System.Diagnostics;
+    using System.IO;
+
+    namespace _Dynamic${id}
+    {
+      public class Test${id}
+      {
+        public static void Main()
+        {
+          using (SQLiteConnection connection = new SQLiteConnection(
+              "Data Source=${dataSource};"))
+          {
+            connection.Open();
+            connection.LogMessage(0, "Connection opened.");
+
+            SQLiteCommand command1 = new SQLiteCommand("${sql(1)}",
+                connection);
+
+            command1.ExecuteNonQuery();
+
+            SQLiteCommand command2 = new SQLiteCommand("${sql(2)}",
+                connection);
+
+            command2.ExecuteNonQuery();
+
+            SQLiteCommand command3 = new SQLiteCommand("${sql(3)}",
+                connection);
+
+            command3.ExecuteNonQuery();
+
+            SQLiteCommand command4 = new SQLiteCommand("${sql(4)}",
+                connection);
+
+            command4.ExecuteNonQuery();
+          }
+
+          GC.Collect();
+          GC.WaitForPendingFinalizers();
+          GC.Collect();
+        }
+      }
+    }
+  }] results errors System.Data.SQLite.dll]
+
+  list $code $results \
+      [expr {[info exists errors] ? $errors : ""}] \
+      [expr {$code eq "Ok" ? [catch {
+        object invoke _Dynamic${id}.Test${id} Main
+      } result] : [set result ""]}] $result \
+      [set memory_used(after) [reportSQLiteResources stdout]]
 } -cleanup {
   cleanupDb $fileName
 
-  unset -nocomplain db fileName
+  unset -nocomplain result code results errors sql dataSource id db fileName
 } -constraints \
-{eagle monoBug28 command.sql compile.DATA SQLite System.Data.SQLite} -result \
-{1 10485760 10}}
+{eagle logFile monoBug28 command.sql compile.DATA SQLite System.Data.SQLite} \
+-match regexp -result [appendArgs "^Ok\
+System#CodeDom#Compiler#CompilerResults#\\d+ \\{\\} 0 \\{\\} "\
+$memory_used(before) \$]}
+
+###############################################################################
+
+unset -nocomplain memory_used
 
 ###############################################################################
 
