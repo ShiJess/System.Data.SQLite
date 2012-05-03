@@ -123,7 +123,12 @@ namespace System.Data.SQLite
 
         if (n > 0) throw new SQLiteException(n, null);
 
-        _sql = db;
+        _sql = new SQLiteConnectionHandle(db);
+
+        lock (_sql)
+        {
+            // do nothing.
+        }
       }
       _functionsArray = SQLiteFunction.BindFunctions(this, connectionFlags);
       SetTimeout(0);

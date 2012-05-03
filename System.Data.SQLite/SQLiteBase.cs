@@ -347,7 +347,10 @@ namespace System.Data.SQLite
     internal static string GetLastError(SQLiteConnectionHandle hdl, IntPtr db)
     {
         if ((hdl == null) || (db == IntPtr.Zero))
-            return "invalid connection or database handle";
+            return "null connection or database handle";
+
+        if (hdl.IsClosed || hdl.IsInvalid)
+            return "closed or invalid connection handle";
 
         lock (hdl)
         {
@@ -360,22 +363,30 @@ namespace System.Data.SQLite
         }
     }
 
-    internal static void FinishBackup(IntPtr backup)
+    internal static void FinishBackup(SQLiteConnectionHandle hdl, IntPtr backup)
     {
-        if (backup == IntPtr.Zero) return;
-        int n = UnsafeNativeMethods.sqlite3_backup_finish(backup);
-        if (n > 0) throw new SQLiteException(n, null);
+        if ((hdl == null) || (backup == IntPtr.Zero)) return;
+        if (hdl.IsClosed || hdl.IsInvalid) return;
+        lock (hdl)
+        {
+            int n = UnsafeNativeMethods.sqlite3_backup_finish(backup);
+            if (n > 0) throw new SQLiteException(n, null);
+        }
     }
 
-    internal static void FinalizeStatement(IntPtr stmt)
+    internal static void FinalizeStatement(SQLiteConnectionHandle hdl, IntPtr stmt)
     {
-        if (stmt == IntPtr.Zero) return;
+        if ((hdl == null) || (stmt == IntPtr.Zero)) return;
+        if (hdl.IsClosed || hdl.IsInvalid) return;
+        lock (hdl)
+        {
 #if !SQLITE_STANDARD
-        int n = UnsafeNativeMethods.sqlite3_finalize_interop(stmt);
+            int n = UnsafeNativeMethods.sqlite3_finalize_interop(stmt);
 #else
-        int n = UnsafeNativeMethods.sqlite3_finalize(stmt);
+            int n = UnsafeNativeMethods.sqlite3_finalize(stmt);
 #endif
-        if (n > 0) throw new SQLiteException(n, null);
+            if (n > 0) throw new SQLiteException(n, null);
+        }
     }
 
     internal static void CloseConnection(SQLiteConnectionHandle hdl, IntPtr db)
@@ -396,6 +407,7 @@ namespace System.Data.SQLite
     internal static void ResetConnection(SQLiteConnectionHandle hdl, IntPtr db)
     {
         if ((hdl == null) || (db == IntPtr.Zero)) return;
+        if (hdl.IsClosed || hdl.IsInvalid) return;
         lock (hdl)
         {
             IntPtr stmt = IntPtr.Zero;
@@ -413,7 +425,7 @@ namespace System.Data.SQLite
                 }
             } while (stmt != IntPtr.Zero);
 
-            if (IsAutocommit(db) == false) // a transaction is pending on the connection
+            if (IsAutocommit(hdl, db) == false) // a transaction is pending on the connection
             {
                 n = UnsafeNativeMethods.sqlite3_exec(db, ToUTF8("ROLLBACK"), IntPtr.Zero, IntPtr.Zero, out stmt);
                 if (n > 0) throw new SQLiteException(n, GetLastError(hdl, db));
@@ -421,12 +433,15 @@ namespace System.Data.SQLite
         }
     }
 
-    internal static bool IsAutocommit(IntPtr db)
+    internal static bool IsAutocommit(SQLiteConnectionHandle hdl, IntPtr db)
     {
-      if (db == IntPtr.Zero) return false;
-      return (UnsafeNativeMethods.sqlite3_get_autocommit(db) == 1);
+        if ((hdl == null) || (db == IntPtr.Zero)) return false;
+        if (hdl.IsClosed || hdl.IsInvalid) return false;
+        lock (hdl)
+        {
+            return (UnsafeNativeMethods.sqlite3_get_autocommit(db) == 1);
+        }
     }
-
   }
 
   internal interface ISQLiteSchemaExtensions

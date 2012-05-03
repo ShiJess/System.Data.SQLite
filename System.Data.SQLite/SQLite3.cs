@@ -192,7 +192,7 @@ namespace System.Data.SQLite
     {
       get
       {
-        return IsAutocommit(_sql);
+        return IsAutocommit(_sql, _sql);
       }
     }
 
@@ -276,7 +276,12 @@ namespace System.Data.SQLite
 
         if (n > 0) throw new SQLiteException(n, null);
 
-        _sql = db;
+        _sql = new SQLiteConnectionHandle(db);
+
+        lock (_sql)
+        {
+            // do nothing.
+        }
       }
       // Bind functions to this connection.  If any previous functions of the same name
       // were already bound, then the new bindings replace the old.
@@ -533,7 +538,7 @@ namespace System.Data.SQLite
 
         strRemain = UTF8ToString(ptr, len);
 
-        if (stmt != IntPtr.Zero) cmd = new SQLiteStatement(this, flags, stmt, strSql.Substring(0, strSql.Length - strRemain.Length), previous);
+        if (stmt != IntPtr.Zero) cmd = new SQLiteStatement(this, flags, new SQLiteStatementHandle(_sql, stmt), strSql.Substring(0, strSql.Length - strRemain.Length), previous);
 
         return cmd;
       }
@@ -1475,7 +1480,8 @@ namespace System.Data.SQLite
             throw new SQLiteException(ResultCode(), GetLastError());
 
         return new SQLiteBackup(
-            this, backup, destHandle, zDestName, sourceHandle, zSourceName);
+            this, new SQLiteBackupHandle(destHandle, backup),
+            destHandle, zDestName, sourceHandle, zSourceName);
     }
 
     /// <summary>

@@ -1355,33 +1355,26 @@ namespace System.Data.SQLite
     {
       get;
     }
-
   }
-
 #endif
 
   // Handles the unmanaged database pointer, and provides finalization support for it.
-  internal class SQLiteConnectionHandle : CriticalHandle
+  internal class SQLiteConnectionHandle : SafeHandle
   {
     public static implicit operator IntPtr(SQLiteConnectionHandle db)
     {
       return (db != null) ? db.handle : IntPtr.Zero;
     }
 
-    public static implicit operator SQLiteConnectionHandle(IntPtr db)
+    private SQLiteConnectionHandle()
+        : base(IntPtr.Zero, true)
     {
-      return new SQLiteConnectionHandle(db);
     }
 
-    private SQLiteConnectionHandle(IntPtr db)
+    internal SQLiteConnectionHandle(IntPtr db)
       : this()
     {
       SetHandle(db);
-    }
-
-    internal SQLiteConnectionHandle()
-      : base(IntPtr.Zero)
-    {
     }
 
     protected override bool ReleaseHandle()
@@ -1462,14 +1455,17 @@ namespace System.Data.SQLite
   // Provides finalization support for unmanaged SQLite statements.
   internal class SQLiteStatementHandle : CriticalHandle
   {
+    internal SQLiteConnectionHandle cnn;
+    private bool releaseNeeded;
+
     public static implicit operator IntPtr(SQLiteStatementHandle stmt)
     {
       return (stmt != null) ? stmt.handle : IntPtr.Zero;
     }
 
-    public static implicit operator SQLiteStatementHandle(IntPtr stmt)
+    private SQLiteStatementHandle()
+        : base(IntPtr.Zero)
     {
-      return new SQLiteStatementHandle(stmt);
     }
 
     private SQLiteStatementHandle(IntPtr stmt)
@@ -1478,9 +1474,13 @@ namespace System.Data.SQLite
       SetHandle(stmt);
     }
 
-    internal SQLiteStatementHandle()
-      : base(IntPtr.Zero)
+    internal SQLiteStatementHandle(SQLiteConnectionHandle cnn, IntPtr stmt)
+        : this(stmt)
     {
+      if (cnn != null)
+        cnn.DangerousAddRef(ref releaseNeeded);
+
+      this.cnn = cnn;
     }
 
     protected override bool ReleaseHandle()
@@ -1492,7 +1492,10 @@ namespace System.Data.SQLite
           ref handle, IntPtr.Zero);
 
         if (localHandle != IntPtr.Zero)
-          SQLiteBase.FinalizeStatement(localHandle);
+          SQLiteBase.FinalizeStatement(cnn, localHandle);
+
+        if ((cnn != null) && releaseNeeded)
+          cnn.DangerousRelease();
 
 #if DEBUG && !NET_COMPACT_20
         try
@@ -1507,7 +1510,7 @@ namespace System.Data.SQLite
 #else
         if (handle != IntPtr.Zero)
         {
-          SQLiteBase.FinalizeStatement(handle);
+          SQLiteBase.FinalizeStatement(cnn, handle);
           SetHandle(IntPtr.Zero);
         }
 #endif
@@ -1561,14 +1564,17 @@ namespace System.Data.SQLite
   // Provides finalization support for unmanaged SQLite backup objects.
   internal class SQLiteBackupHandle : CriticalHandle
   {
+      internal SQLiteConnectionHandle cnn;
+      private bool releaseNeeded;
+
       public static implicit operator IntPtr(SQLiteBackupHandle backup)
       {
           return (backup != null) ? backup.handle : IntPtr.Zero;
       }
 
-      public static implicit operator SQLiteBackupHandle(IntPtr backup)
+      private SQLiteBackupHandle()
+          : base(IntPtr.Zero)
       {
-          return new SQLiteBackupHandle(backup);
       }
 
       private SQLiteBackupHandle(IntPtr backup)
@@ -1577,9 +1583,13 @@ namespace System.Data.SQLite
           SetHandle(backup);
       }
 
-      internal SQLiteBackupHandle()
-          : base(IntPtr.Zero)
+      internal SQLiteBackupHandle(SQLiteConnectionHandle cnn, IntPtr backup)
+          : this(backup)
       {
+          if (cnn != null)
+              cnn.DangerousAddRef(ref releaseNeeded);
+
+          this.cnn = cnn;
       }
 
       protected override bool ReleaseHandle()
@@ -1591,7 +1601,10 @@ namespace System.Data.SQLite
                   ref handle, IntPtr.Zero);
 
               if (localHandle != IntPtr.Zero)
-                  SQLiteBase.FinishBackup(localHandle);
+                  SQLiteBase.FinishBackup(cnn, localHandle);
+
+              if ((cnn != null) && releaseNeeded)
+                  cnn.DangerousRelease();
 
 #if DEBUG && !NET_COMPACT_20
               try
@@ -1606,7 +1619,7 @@ namespace System.Data.SQLite
 #else
               if (handle != IntPtr.Zero)
               {
-                SQLiteBase.FinishBackup(handle);
+                SQLiteBase.FinishBackup(cnn, handle);
                 SetHandle(IntPtr.Zero);
               }
 #endif
