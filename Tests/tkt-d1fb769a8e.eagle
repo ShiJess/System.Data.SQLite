@@ -1,0 +1,132 @@
+###############################################################################
+#
+# tkt-d1fb769a8e.eagle --
+#
+# Written by Joe Mistachkin.
+# Released to the public domain, use at your own risk!
+#
+###############################################################################
+
+package require Eagle
+package require Eagle.Library
+package require Eagle.Test
+
+runTestPrologue
+
+###############################################################################
+
+package require System.Data.SQLite.Test
+runSQLiteTestPrologue
+
+###############################################################################
+
+runTest {test tkt-d1fb769a8e-1.1 {R*Tree virtual table creation} -setup {
+  unset -nocomplain errors thread index count
+  setupDb [set fileName tkt-d1fb769a8e-1.1.db]
+
+  proc writeToDb { fileName count delay } {
+    setupDb $fileName "" "" "" "" "" true false
+
+    try {
+      for {set index 1} {$index <= $count} {incr index} {
+        after [expr {int(rand() * $delay)}]
+        if {[catch {
+          sql execute $db "CREATE TABLE t${index}(x);"
+          sql execute $db "INSERT INTO t1 (x) VALUES(${index});"
+        } error]} then {
+          incr ::errors(0)
+          tputs $::test_channel [appendArgs \
+              \n "---- INSERT error: " \n\t $error \n]
+        }
+      }
+    } finally {
+      cleanupDb $fileName db true false false
+    }
+  }
+
+  proc createRTreeTable { fileName count delay } {
+    setupDb $fileName "" "" "" "" "" true false
+
+    try {
+      for {set index 1} {$index <= $count} {incr index} {
+        after [expr {int(rand() * $delay)}]
+        if {[catch {
+          sql execute $db [subst {
+            CREATE VIRTUAL TABLE IF NOT EXISTS test${index} USING rtree(
+              id, minX, maxX, minY, maxY
+            );
+          }]
+        } error]} then {
+          incr ::errors(1)
+          tputs $::test_channel [appendArgs \
+              \n "---- CREATE VIRTUAL TABLE error: " \n\t $error \n]
+        }
+      }
+    } finally {
+      cleanupDb $fileName db true false false
+    }
+  }
+} -body {
+  set errors(0) 0;   # total number of INSERT errors.
+  set errors(1) 0;   # total number of R*Tree errors.
+  set count(0) 2;    # total number of test threads.
+  set count(1) 1000; # total number of iterations per test thread.
+  set count(2) 500;  # maximum milliseconds between test thread iterations.
+
+  tputs $test_channel [appendArgs \
+      "==== WARNING: this test may take several minutes...\n"]
+
+  for {set index(0) 1} {$index(0) <= $count(0)} {incr index(0)} {
+    set thread($index(0)) [object create -alias System.Threading.Thread \
+        [list [expr {$index(0) % 2 == 0 ? "createRTreeTable" : "writeToDb"}] \
+        $fileName $count(1) $count(2)] 1048576]
+
+    $thread($index(0)) Name [appendArgs \
+        [file rootname [file tail $fileName]] " #" $index(0)]
+  }
+
+  foreach index(0) [list Start Join] {
+    foreach index(1) [array names thread] {
+      $thread($index(1)) $index(0)
+    }
+  }
+
+  foreach index(0) [array names thread] {
+    if {[info exists thread($index(0))] && \
+        [cleanupThread $thread($index(0))]} then {
+      unset -nocomplain thread($index(0))
+    }
+  }
+
+  list $errors(0) $errors(1)
+} -cleanup {
+  foreach index [array names thread] {
+    if {[info exists thread($index)] && \
+        [cleanupThread $thread($index)]} then {
+      unset -nocomplain thread($index)
+    }
+  }
+
+  rename createRTreeTable ""
+  rename writeToDb ""
+
+  catch {
+    object removecallback [list \
+        createRTreeTable $fileName $count(1) $count(2)]
+  }
+  catch {
+    object removecallback [list \
+        writeToDb $fileName $count(1) $count(2)]
+  }
+
+  cleanupDb $fileName
+
+  unset -nocomplain errors thread index count db fileName
+} -time true -constraints \
+{eagle monoBug28 defineConstant.System.Data.SQLite.INTEROP_TEST_EXTENSION\
+command.sql compile.DATA SQLite System.Data.SQLite} -result {0 0}}
+
+###############################################################################
+
+runSQLiteTestEpilogue
+runTestEpilogue
