@@ -1,0 +1,181 @@
+###############################################################################
+#
+# tkt-e235a52c82.eagle --
+#
+# Written by Joe Mistachkin.
+# Released to the public domain, use at your own risk!
+#
+###############################################################################
+
+package require Eagle
+package require Eagle.Library
+package require Eagle.Test
+
+runTestPrologue
+
+###############################################################################
+
+package require System.Data.SQLite.Test
+runSQLiteTestPrologue
+
+###############################################################################
+
+runTest {test tkt-e235a52c82-1.1 {transient command disposal} -setup {
+  set fileName tkt-e235a52c82-1.1.db
+} -body {
+  setupDb $fileName
+
+  sql execute $db {
+    CREATE TABLE t1(x);
+    INSERT INTO t1 (x) VALUES('1');
+    INSERT INTO t1 (x) VALUES('2');
+  }
+
+  cleanupDb $fileName db true false false
+
+  set id [object invoke Interpreter.GetActive NextId]
+  set dataSource [file join [getDatabaseDirectory] $fileName]
+
+  set sql { \
+    SELECT x FROM t1 ORDER BY x; \
+  }
+
+  unset -nocomplain results errors
+
+  set code [compileCSharpWith [subst {
+    using System;
+    using System.Data;
+    using System.Data.SQLite;
+
+    namespace _Dynamic${id}
+    {
+      public sealed class Query${id}
+      {
+        private IDbConnection connection;
+        private bool opened;
+
+        ///////////////////////////////////////////////////////////////////////
+
+        private void EnsureConnection()
+        {
+          if (connection == null)
+            connection = new SQLiteConnection("Data Source=${dataSource};");
+
+          if (connection.State == ConnectionState.Closed)
+          {
+            connection.Open();
+            opened = true;
+
+            using (IDbCommand command = CreateCommand("BEGIN IMMEDIATE;"))
+            {
+              command.ExecuteNonQuery();
+            }
+          }
+        }
+
+        ///////////////////////////////////////////////////////////////////////
+
+        private void ReleaseConnection()
+        {
+          if (connection == null)
+            throw new Exception("cannot release connection");
+
+          if (opened)
+          {
+            connection.Close();
+            opened = false;
+          }
+        }
+
+        ///////////////////////////////////////////////////////////////////////
+
+        private IDbCommand CreateCommand(
+          string commandText
+          )
+        {
+          if (connection == null)
+            throw new Exception("cannot create command");
+
+          IDbCommand command = connection.CreateCommand();
+          command.CommandText = commandText;
+
+          return command;
+        }
+
+        ///////////////////////////////////////////////////////////////////////
+
+        public object ExecuteReader(
+          string commandText
+          )
+        {
+          object result;
+          EnsureConnection();
+          IDataReader reader = null;
+
+          try
+          {
+            reader = CreateCommand(commandText).ExecuteReader();
+          }
+          catch
+          {
+            ReleaseConnection();
+            throw;
+          }
+
+          /////////////////////////////////////////////////////////////////////
+
+          try
+          {
+            result = reader.GetValue(0);
+          }
+          catch
+          {
+            reader.Dispose();
+            ReleaseConnection();
+            throw;
+          }
+
+          return result;
+        }
+      }
+
+      /////////////////////////////////////////////////////////////////////////
+
+      public static class Test${id}
+      {
+        public static string\[\] GetData()
+        {
+          return new string\[\] {
+            new Query${id}().ExecuteReader("${sql}").ToString(),
+            new Query${id}().ExecuteReader("${sql}").ToString()
+          };
+        }
+
+        ///////////////////////////////////////////////////////////////////////
+
+        public static void Main()
+        {
+          // do nothing.
+        }
+      }
+    }
+  }] true true true results errors System.Data.SQLite.dll]
+
+  list $code $results \
+      [expr {[info exists errors] ? $errors : ""}] \
+      [expr {$code eq "Ok" ? [catch {
+        object invoke _Dynamic${id}.Test${id} GetData
+      } result] : [set result ""]}] $result
+} -cleanup {
+  cleanupDb $fileName
+
+  unset -nocomplain result results errors code sql dataSource id db fileName
+} -constraints \
+{eagle monoBug28 command.sql compile.DATA SQLite System.Data.SQLite} \
+-match regexp -result {^Ok System#CodeDom#Compiler#CompilerResults#\d+ \{\} 0\
+\{1 1\}$}}
+
+###############################################################################
+
+runSQLiteTestEpilogue
+runTestEpilogue
