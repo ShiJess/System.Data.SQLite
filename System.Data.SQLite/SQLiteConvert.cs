@@ -787,6 +787,7 @@ namespace System.Data.SQLite
     /// <param name="typ">The SQLiteType to receive the affinity for the given column</param>
     internal static void ColumnToType(SQLiteStatement stmt, int i, SQLiteType typ)
     {
+      stmt.CheckDisposed();
       typ.Type = TypeNameToDbType(stmt._sql.ColumnType(stmt, i, out typ.Affinity));
     }
 

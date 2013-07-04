@@ -211,6 +211,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_DateTime(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index, DateTime dt)
     {
+        stmt.CheckDisposed();
         switch (_datetimeFormat)
         {
             case SQLiteDateFormats.Ticks:
@@ -240,6 +241,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_Text(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index, string value)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
 
 #if !PLATFORM_COMPACTFRAMEWORK
@@ -255,6 +257,7 @@ namespace System.Data.SQLite
 
     internal override DateTime GetDateTime(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       if (_datetimeFormat == SQLiteDateFormats.Ticks)
         return ToDateTime(GetInt64(stmt, index), _datetimeKind);
       else if (_datetimeFormat == SQLiteDateFormats.JulianDay)
@@ -267,6 +270,7 @@ namespace System.Data.SQLite
 
     internal override string ColumnName(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       int len;
       return UTF16ToString(UnsafeNativeMethods.sqlite3_column_name16_interop(stmt._sqlite_stmt, index, out len), len);
@@ -277,6 +281,7 @@ namespace System.Data.SQLite
 
     internal override string GetText(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       int len;
       return UTF16ToString(UnsafeNativeMethods.sqlite3_column_text16_interop(stmt._sqlite_stmt, index, out len), len);
@@ -288,6 +293,7 @@ namespace System.Data.SQLite
 
     internal override string ColumnOriginalName(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       int len;
       return UTF16ToString(UnsafeNativeMethods.sqlite3_column_origin_name16_interop(stmt._sqlite_stmt, index, out len), len);
@@ -298,6 +304,7 @@ namespace System.Data.SQLite
 
     internal override string ColumnDatabaseName(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       int len;
       return UTF16ToString(UnsafeNativeMethods.sqlite3_column_database_name16_interop(stmt._sqlite_stmt, index, out len), len);
@@ -308,6 +315,7 @@ namespace System.Data.SQLite
 
     internal override string ColumnTableName(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       int len;
       return UTF16ToString(UnsafeNativeMethods.sqlite3_column_table_name16_interop(stmt._sqlite_stmt, index, out len), len);

@@ -413,6 +413,7 @@ namespace System.Data.SQLite
     /// </summary>
     internal void MapParameters(SQLiteStatement activeStatement)
     {
+      if (activeStatement != null) activeStatement.CheckDisposed();
       if (_unboundFlag == false || _parameterList.Count == 0 || _command._statementList == null) return;
 
       int nUnnamed = 0;

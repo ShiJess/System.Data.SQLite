@@ -558,6 +558,7 @@ namespace System.Data.SQLite
 
     internal override bool Step(SQLiteStatement stmt)
     {
+      stmt.CheckDisposed();
       SQLiteErrorCode n;
       Random rnd = null;
       uint starttick = (uint)Environment.TickCount;
@@ -605,6 +606,7 @@ namespace System.Data.SQLite
 
     internal override SQLiteErrorCode Reset(SQLiteStatement stmt)
     {
+      stmt.CheckDisposed();
       SQLiteErrorCode n;
 
 #if !SQLITE_STANDARD
@@ -647,6 +649,7 @@ namespace System.Data.SQLite
 
     internal override SQLiteStatement Prepare(SQLiteConnection cnn, string strSql, SQLiteStatement previous, uint timeoutMS, out string strRemain)
     {
+      if (previous != null) previous.CheckDisposed();
       if (!String.IsNullOrEmpty(strSql))
       {
         //
@@ -887,6 +890,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_Double(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index, double value)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
 
         if ((flags & SQLiteConnectionFlags.LogBind) == SQLiteConnectionFlags.LogBind)
@@ -906,6 +910,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_Int32(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index, int value)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
 
         if ((flags & SQLiteConnectionFlags.LogBind) == SQLiteConnectionFlags.LogBind)
@@ -919,6 +924,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_UInt32(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index, uint value)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
 
 #if !PLATFORM_COMPACTFRAMEWORK
@@ -951,6 +957,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_Int64(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index, long value)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
 
 #if !PLATFORM_COMPACTFRAMEWORK
@@ -970,6 +977,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_UInt64(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index, ulong value)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
 
 #if !PLATFORM_COMPACTFRAMEWORK
@@ -989,6 +997,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_Text(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index, string value)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
 
 #if !PLATFORM_COMPACTFRAMEWORK
@@ -1013,6 +1022,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_DateTime(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index, DateTime dt)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
 
 #if !PLATFORM_COMPACTFRAMEWORK
@@ -1101,6 +1111,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_Blob(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index, byte[] blobData)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
 
 #if !PLATFORM_COMPACTFRAMEWORK
@@ -1116,6 +1127,7 @@ namespace System.Data.SQLite
 
     internal override void Bind_Null(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
 
 #if !PLATFORM_COMPACTFRAMEWORK
@@ -1131,6 +1143,7 @@ namespace System.Data.SQLite
 
     internal override int Bind_ParamCount(SQLiteStatement stmt, SQLiteConnectionFlags flags)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
         int value = UnsafeNativeMethods.sqlite3_bind_parameter_count(handle);
 
@@ -1149,6 +1162,7 @@ namespace System.Data.SQLite
 
     internal override string Bind_ParamName(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
         string name;
 
@@ -1174,6 +1188,7 @@ namespace System.Data.SQLite
 
     internal override int Bind_ParamIndex(SQLiteStatement stmt, SQLiteConnectionFlags flags, string paramName)
     {
+        stmt.CheckDisposed();
         SQLiteStatementHandle handle = stmt._sqlite_stmt;
         int index = UnsafeNativeMethods.sqlite3_bind_parameter_index(handle, ToUTF8(paramName));
 
@@ -1192,11 +1207,13 @@ namespace System.Data.SQLite
 
     internal override int ColumnCount(SQLiteStatement stmt)
     {
+      stmt.CheckDisposed();
       return UnsafeNativeMethods.sqlite3_column_count(stmt._sqlite_stmt);
     }
 
     internal override string ColumnName(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       int len;
       return UTF8ToString(UnsafeNativeMethods.sqlite3_column_name_interop(stmt._sqlite_stmt, index, out len), len);
@@ -1207,11 +1224,13 @@ namespace System.Data.SQLite
 
     internal override TypeAffinity ColumnAffinity(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       return UnsafeNativeMethods.sqlite3_column_type(stmt._sqlite_stmt, index);
     }
 
     internal override string ColumnType(SQLiteStatement stmt, int index, out TypeAffinity nAffinity)
     {
+      stmt.CheckDisposed();
       int len;
 #if !SQLITE_STANDARD
       IntPtr p = UnsafeNativeMethods.sqlite3_column_decltype_interop(stmt._sqlite_stmt, index, out len);
@@ -1248,6 +1267,7 @@ namespace System.Data.SQLite
 
     internal override int ColumnIndex(SQLiteStatement stmt, string columnName)
     {
+      stmt.CheckDisposed();
       int x = ColumnCount(stmt);
 
       for (int n = 0; n < x; n++)
@@ -1260,6 +1280,7 @@ namespace System.Data.SQLite
 
     internal override string ColumnOriginalName(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       int len;
       return UTF8ToString(UnsafeNativeMethods.sqlite3_column_origin_name_interop(stmt._sqlite_stmt, index, out len), len);
@@ -1270,6 +1291,7 @@ namespace System.Data.SQLite
 
     internal override string ColumnDatabaseName(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       int len;
       return UTF8ToString(UnsafeNativeMethods.sqlite3_column_database_name_interop(stmt._sqlite_stmt, index, out len), len);
@@ -1280,6 +1302,7 @@ namespace System.Data.SQLite
 
     internal override string ColumnTableName(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       int len;
       return UTF8ToString(UnsafeNativeMethods.sqlite3_column_table_name_interop(stmt._sqlite_stmt, index, out len), len);
@@ -1319,6 +1342,7 @@ namespace System.Data.SQLite
 
     internal override double GetDouble(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       double value;
 #if !PLATFORM_COMPACTFRAMEWORK
       value = UnsafeNativeMethods.sqlite3_column_double(stmt._sqlite_stmt, index);
@@ -1332,36 +1356,43 @@ namespace System.Data.SQLite
 
     internal override sbyte GetSByte(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       return unchecked((sbyte)(GetInt32(stmt, index) & byte.MaxValue));
     }
 
     internal override byte GetByte(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       return unchecked((byte)(GetInt32(stmt, index) & byte.MaxValue));
     }
 
     internal override short GetInt16(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       return unchecked((short)(GetInt32(stmt, index) & ushort.MaxValue));
     }
 
     internal override ushort GetUInt16(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       return unchecked((ushort)(GetInt32(stmt, index) & ushort.MaxValue));
     }
 
     internal override int GetInt32(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       return UnsafeNativeMethods.sqlite3_column_int(stmt._sqlite_stmt, index);
     }
 
     internal override uint GetUInt32(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       return unchecked((uint)GetInt32(stmt, index));
     }
 
     internal override long GetInt64(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       long value;
 #if !PLATFORM_COMPACTFRAMEWORK
       value = UnsafeNativeMethods.sqlite3_column_int64(stmt._sqlite_stmt, index);
@@ -1375,11 +1406,13 @@ namespace System.Data.SQLite
 
     internal override ulong GetUInt64(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       return unchecked((ulong)GetInt64(stmt, index));
     }
 
     internal override string GetText(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       int len;
       return UTF8ToString(UnsafeNativeMethods.sqlite3_column_text_interop(stmt._sqlite_stmt, index, out len), len);
@@ -1391,6 +1424,7 @@ namespace System.Data.SQLite
 
     internal override DateTime GetDateTime(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       if (_datetimeFormat == SQLiteDateFormats.Ticks)
         return ToDateTime(GetInt64(stmt, index), _datetimeKind);
       else if (_datetimeFormat == SQLiteDateFormats.JulianDay)
@@ -1409,6 +1443,7 @@ namespace System.Data.SQLite
 
     internal override long GetBytes(SQLiteStatement stmt, int index, int nDataOffset, byte[] bDest, int nStart, int nLength)
     {
+      stmt.CheckDisposed();
       int nlen = UnsafeNativeMethods.sqlite3_column_bytes(stmt._sqlite_stmt, index);
 
       // If no destination buffer, return the size needed.
@@ -1435,6 +1470,7 @@ namespace System.Data.SQLite
 
     internal override long GetChars(SQLiteStatement stmt, int index, int nDataOffset, char[] bDest, int nStart, int nLength)
     {
+      stmt.CheckDisposed();
       int nlen;
       int nCopied = nLength;
 
@@ -1455,6 +1491,7 @@ namespace System.Data.SQLite
 
     internal override bool IsNull(SQLiteStatement stmt, int index)
     {
+      stmt.CheckDisposed();
       return (ColumnAffinity(stmt, index) == TypeAffinity.Null);
     }
 
@@ -2345,6 +2382,7 @@ namespace System.Data.SQLite
     /// <returns>Returns the data in the column</returns>
     internal override object GetValue(SQLiteStatement stmt, SQLiteConnectionFlags flags, int index, SQLiteType typ)
     {
+      stmt.CheckDisposed();
       if (IsNull(stmt, index)) return DBNull.Value;
       TypeAffinity aff = typ.Affinity;
       Type t = null;
@@ -2394,6 +2432,7 @@ namespace System.Data.SQLite
 
     internal override int GetCursorForTable(SQLiteStatement stmt, int db, int rootPage)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       return UnsafeNativeMethods.sqlite3_table_cursor_interop(stmt._sqlite_stmt, db, rootPage);
 #else
@@ -2403,6 +2442,7 @@ namespace System.Data.SQLite
 
     internal override long GetRowIdForCursor(SQLiteStatement stmt, int cursor)
     {
+      stmt.CheckDisposed();
 #if !SQLITE_STANDARD
       long rowid;
       SQLiteErrorCode rc = UnsafeNativeMethods.sqlite3_cursor_rowid_interop(stmt._sqlite_stmt, cursor, out rowid);

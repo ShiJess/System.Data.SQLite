@@ -151,6 +151,7 @@ namespace System.Data.SQLite
     /// <param name="stmt"></param>
     internal SQLiteKeyReader(SQLiteConnection cnn, SQLiteDataReader reader, SQLiteStatement stmt)
     {
+      stmt.CheckDisposed();
       Dictionary<string, int> catalogs = new Dictionary<string, int>();
       Dictionary<string, List<string>> tables = new Dictionary<string, List<string>>();
       List<string> list;

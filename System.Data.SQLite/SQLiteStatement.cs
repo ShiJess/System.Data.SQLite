@@ -61,6 +61,8 @@ namespace System.Data.SQLite
     /// <param name="previous">The previous command in a multi-statement command</param>
     internal SQLiteStatement(SQLiteBase sqlbase, SQLiteConnectionFlags flags, SQLiteStatementHandle stmt, string strCommand, SQLiteStatement previous)
     {
+      if (previous != null) previous.CheckDisposed();
+
       _sql     = sqlbase;
       _sqlite_stmt = stmt;
       _sqlStatement  = strCommand;
@@ -112,7 +114,7 @@ namespace System.Data.SQLite
 
     #region IDisposable "Pattern" Members
     private bool disposed;
-    private void CheckDisposed() /* throw */
+    internal void CheckDisposed() /* throw */
     {
 #if THROW_ON_DISPOSED
         if (disposed)
