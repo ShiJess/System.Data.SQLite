@@ -1,0 +1,94 @@
+###############################################################################
+#
+# tkt-5363fd4af6.eagle --
+#
+# Written by Joe Mistachkin.
+# Released to the public domain, use at your own risk!
+#
+###############################################################################
+
+package require Eagle
+package require Eagle.Library
+package require Eagle.Test
+
+runTestPrologue
+
+###############################################################################
+
+package require System.Data.SQLite.Test
+runSQLiteTestPrologue
+
+###############################################################################
+
+runTest {test tkt-5363fd4af6-1.1 {data reader access violation} -setup {
+  set fileName tkt-5363fd4af6-1.1.db
+} -body {
+  set id [object invoke Interpreter.GetActive NextId]
+  set dataSource [file join [getDatabaseDirectory] $fileName]
+
+  set sql { \
+    CREATE TABLE t1(x); \
+    INSERT INTO t1 (x) VALUES(1); \
+    INSERT INTO t1 (x) VALUES(2); \
+    INSERT INTO t1 (x) VALUES(3); \
+    SELECT x FROM t1 ORDER BY x; \
+  }
+
+  unset -nocomplain results errors
+
+  set code [compileCSharpWith [subst {
+    using System.Data.SQLite;
+    using Eagle._Containers.Public;
+
+    namespace _Dynamic${id}
+    {
+      public static class Test${id}
+      {
+        public static StringList GetList()
+        {
+          StringList result = new StringList();
+
+          using (SQLiteConnection connection = new SQLiteConnection(
+              "Data Source=${dataSource};"))
+          {
+            connection.Open();
+
+            SQLiteCommand command = new SQLiteCommand("${sql}", connection);
+            SQLiteDataReader dataReader = command.ExecuteReader();
+            command.Dispose();
+
+            while (dataReader.Read())
+              result.Add(dataReader\["x"\].ToString());
+          }
+
+          return result;
+        }
+
+        ///////////////////////////////////////////////////////////////////////
+
+        public static void Main()
+        {
+          // do nothing.
+        }
+      }
+    }
+  }] true true true results errors [list System.Data.SQLite.dll Eagle.dll]]
+
+  list $code $results \
+      [expr {[info exists errors] ? $errors : ""}] \
+      [expr {$code eq "Ok" ? [catch {
+        object invoke _Dynamic${id}.Test${id} GetList
+      } result] : [set result ""]}] $result
+} -cleanup {
+  cleanupDb $fileName
+
+  unset -nocomplain result results errors code sql dataSource id fileName
+} -constraints \
+{eagle monoBug28 command.sql compile.DATA SQLite System.Data.SQLite} \
+-match regexp -result {^Ok System#CodeDom#Compiler#CompilerResults#\d+ \{\} 0\
+\{1 2 3\}$}}
+
+###############################################################################
+
+runSQLiteTestEpilogue
+runTestEpilogue
