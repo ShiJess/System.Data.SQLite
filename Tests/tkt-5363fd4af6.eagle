@@ -37,6 +37,7 @@ runTest {test tkt-5363fd4af6-1.1 {data reader access violation} -setup {
   unset -nocomplain results errors
 
   set code [compileCSharpWith [subst {
+    using System;
     using System.Data.SQLite;
     using Eagle._Containers.Public;
 
@@ -55,10 +56,14 @@ runTest {test tkt-5363fd4af6-1.1 {data reader access violation} -setup {
 
             SQLiteCommand command = new SQLiteCommand("${sql}", connection);
             SQLiteDataReader dataReader = command.ExecuteReader();
+
             command.Dispose();
+            GC.GetTotalMemory(true);
 
             while (dataReader.Read())
               result.Add(dataReader\["x"\].ToString());
+
+            dataReader.Dispose();
           }
 
           return result;
