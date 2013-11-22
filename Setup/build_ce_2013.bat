@@ -1,9 +1,9 @@
 @ECHO OFF
 
 ::
-:: release_ce.bat --
+:: build_ce_2013.bat --
 ::
-:: WinCE Binary Release Tool
+:: WinCE Wrapper Tool for MSBuild
 ::
 :: Written by Joe Mistachkin.
 :: Released to the public domain, use at your own risk!
@@ -30,20 +30,18 @@ SET TOOLS=%TOOLS:~0,-1%
 
 %_VECHO% Tools = '%TOOLS%'
 
-SET RELEASE_CONFIGURATIONS=Release
+SET BUILD_CONFIGURATIONS=Debug Release
 SET BASE_CONFIGURATIONSUFFIX=Compact
-SET PLATFORMS="Pocket PC 2003 (ARMV4)"
-SET PROCESSORS=arm
-SET YEARS=2008
-SET BASE_PLATFORM=PocketPC-ARM
-SET TYPE=binary
+SET PLATFORMS="CEPC DevPlatform" WCE80_ARMV7TIEVM3730
+SET YEARS=2012
+SET SOLUTION=%TOOLS%\..\SQLite.NET.2012.Compact.sln
 
 CALL :fn_ResetErrorLevel
 
-%__ECHO3% CALL "%TOOLS%\release_all.bat"
+%__ECHO3% CALL "%TOOLS%\build_all.bat"
 
 IF ERRORLEVEL 1 (
-  ECHO Failed to build PocketPC release files.
+  ECHO Failed to build WinCE binaries.
   GOTO errors
 )
 
@@ -65,14 +63,14 @@ IF ERRORLEVEL 1 (
   CALL :fn_SetErrorLevel
   ENDLOCAL
   ECHO.
-  ECHO Release failure, errors were encountered.
+  ECHO Build failure, errors were encountered.
   GOTO end_of_file
 
 :no_errors
   CALL :fn_ResetErrorLevel
   ENDLOCAL
   ECHO.
-  ECHO Release success, no errors were encountered.
+  ECHO Build success, no errors were encountered.
   GOTO end_of_file
 
 :end_of_file
