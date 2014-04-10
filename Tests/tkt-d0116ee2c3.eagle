@@ -20,7 +20,7 @@ runSQLiteTestPrologue
 
 ###############################################################################
 
-runTest {test tkt-d0116ee2c3-1.1 {} -setup {
+runTest {test tkt-d0116ee2c3-1.1 {setting Connection property} -setup {
   setupDb [set fileName tkt-d0116ee2c3-1.1.db]
 } -body {
   sql execute $db {
