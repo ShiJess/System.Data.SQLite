@@ -54,7 +54,7 @@ runTest {test tkt-d0116ee2c3-1.1 {} -setup {
               using (SQLiteDataReader dataReader = command.ExecuteReader())
               {
                 dataReader.Close();
-                command.Connection = null; /* SQLiteException? */
+                command.Connection = null; /* InvalidOperationException? */
               }
             }
           }
