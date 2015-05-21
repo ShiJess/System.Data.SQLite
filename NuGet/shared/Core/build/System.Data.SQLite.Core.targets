@@ -28,8 +28,7 @@
   -->
 
   <ItemGroup Condition="'$(ContentSQLiteInteropFiles)' != 'false' And
-                        '$(MSBuildThisFileDirectory)' != '' And
-                        HasTrailingSlash('$(MSBuildThisFileDirectory)')">
+                        '@(SQLiteInteropFiles)' != ''">
     <Content Include="@(SQLiteInteropFiles)">
       <Link>%(RecursiveDir)%(FileName)%(Extension)</Link>
     </Content>
