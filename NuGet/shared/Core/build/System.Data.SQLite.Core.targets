@@ -23,6 +23,20 @@
 
   <!--
   ******************************************************************************
+  **                   SQLite Interop Library Content Items                   **
+  ******************************************************************************
+  -->
+
+  <ItemGroup Condition="'$(ContentSQLiteInteropFiles)' != 'false' And
+                        '$(MSBuildThisFileDirectory)' != '' And
+                        HasTrailingSlash('$(MSBuildThisFileDirectory)')">
+    <Content Include="@(SQLiteInteropFiles)">
+      <Link>%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+  <!--
+  ******************************************************************************
   **                   SQLite Interop Library Build Targets                   **
   ******************************************************************************
   -->
