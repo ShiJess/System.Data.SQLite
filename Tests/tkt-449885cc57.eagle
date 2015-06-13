@@ -1,0 +1,69 @@
+###############################################################################
+#
+# tkt-449885cc57.eagle --
+#
+# Written by Joe Mistachkin.
+# Released to the public domain, use at your own risk!
+#
+###############################################################################
+
+package require Eagle
+package require Eagle.Library
+package require Eagle.Test
+
+runTestPrologue
+
+###############################################################################
+
+package require System.Data.SQLite.Test
+runSQLiteTestPrologue
+
+###############################################################################
+
+runTest {test tkt-449885cc57-1.1 {Data Source with unescaped "#"} -setup {
+  file mkdir [set directory [file join [getDatabaseDirectory] C#]]
+  set fileName [file join $directory tkt-449885cc57-1.1.db]
+
+  setupDb $fileName "" "" "" "" "" false
+} -body {
+  sql execute $db "CREATE TABLE t1(x);"
+  sql execute $db "INSERT INTO t1 (x) VALUES(1);"
+
+  list [file exists $fileName] \
+      [sql execute -execute scalar $db "SELECT x FROM t1;"]
+} -cleanup {
+  cleanupDb $fileName db true false
+
+  file rmdir $directory; # NOTE: Should now be empty.
+
+  unset -nocomplain db fileName directory
+} -constraints {eagle monoBug28 command.sql compile.DATA SQLite\
+System.Data.SQLite} -result {True 1}}
+
+###############################################################################
+
+runTest {test tkt-449885cc57-1.2 {Data Source with escaped "#"} -setup {
+  file mkdir [set directory [file join [getDatabaseDirectory] C#]]
+  set fileName [file join $directory tkt-449885cc57-1.2.db]
+
+  setupDb [appendArgs file: [string map [list # %23] $fileName]] \
+      "" "" "" "" "" false true true
+} -body {
+  sql execute $db "CREATE TABLE t1(x);"
+  sql execute $db "INSERT INTO t1 (x) VALUES(1);"
+
+  list [file exists $fileName] \
+      [sql execute -execute scalar $db "SELECT x FROM t1;"]
+} -cleanup {
+  cleanupDb $fileName db true false
+
+  file rmdir $directory; # NOTE: Should now be empty.
+
+  unset -nocomplain db fileName directory
+} -constraints {eagle monoBug28 command.sql compile.DATA SQLite\
+System.Data.SQLite} -result {True 1}}
+
+###############################################################################
+
+runSQLiteTestEpilogue
+runTestEpilogue
