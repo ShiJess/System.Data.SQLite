@@ -21,10 +21,17 @@ runSQLiteTestPrologue
 ###############################################################################
 
 runTest {test tkt-449885cc57-1.1 {Data Source with unescaped "#"} -setup {
-  file mkdir [set directory [file join [getDatabaseDirectory] C#]]
+  set savedDataDirectory [object invoke -create \
+      AppDomain CurrentDomain.GetData DataDirectory]
+
+  set directory [file join [getDatabaseDirectory] C#]
+  object invoke AppDomain CurrentDomain.SetData DataDirectory $directory
+
+  file mkdir $directory
   set fileName [file join $directory tkt-449885cc57-1.1.db]
 
-  setupDb $fileName "" "" "" "" "" false
+  setupDb [appendArgs |DataDirectory| [file tail $fileName]] \
+      "" "" "" "" "" false false
 } -body {
   sql execute $db "CREATE TABLE t1(x);"
   sql execute $db "INSERT INTO t1 (x) VALUES(1);"
@@ -35,8 +42,15 @@ runTest {test tkt-449885cc57-1.1 {Data Source with unescaped "#"} -setup {
   cleanupDb $fileName db true false
 
   file rmdir $directory; # NOTE: Should now be empty.
-
   unset -nocomplain db fileName directory
+
+  catch {
+    object invoke AppDomain CurrentDomain.SetData DataDirectory \
+        [expr {[string length $savedDataDirectory] > 0 ? \
+        $savedDataDirectory : "null"}]
+  }
+
+  unset -nocomplain savedDataDirectory
 } -constraints {eagle monoBug28 command.sql compile.DATA SQLite\
 System.Data.SQLite} -result {True 1}}
 
@@ -58,7 +72,6 @@ runTest {test tkt-449885cc57-1.2 {Data Source with escaped "#"} -setup {
   cleanupDb $fileName db true false
 
   file rmdir $directory; # NOTE: Should now be empty.
-
   unset -nocomplain db fileName directory
 } -constraints {eagle monoBug28 command.sql compile.DATA SQLite\
 System.Data.SQLite} -result {True 1}}
