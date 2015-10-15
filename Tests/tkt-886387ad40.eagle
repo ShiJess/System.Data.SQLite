@@ -1,0 +1,102 @@
+###############################################################################
+#
+# tkt-886387ad40.eagle --
+#
+# Written by Joe Mistachkin.
+# Released to the public domain, use at your own risk!
+#
+###############################################################################
+
+package require Eagle
+package require Eagle.Library
+package require Eagle.Test
+
+runTestPrologue
+
+###############################################################################
+
+package require System.Data.SQLite.Test
+runSQLiteTestPrologue
+
+###############################################################################
+
+runTest {test tkt-886387ad40-1.1 {ExecuteNonQuery w/PRAGMA} -setup {
+  setupDb [set fileName tkt-886387ad40-1.1.db]
+} -body {
+  set connection [getDbConnection]
+
+  array set sql [list \
+     1 "PRAGMA locking_mode;" \
+     2 "PRAGMA locking_mode=EXCLUSIVE;" \
+     3 "PRAGMA locking_mode;" \
+     4 "PRAGMA locking_mode=NORMAL;" \
+     5 "PRAGMA locking_mode;" \
+     6 "PRAGMA legacy_file_format;" \
+     7 "PRAGMA legacy_file_format=1;" \
+     8 "PRAGMA legacy_file_format;" \
+     9 "PRAGMA legacy_file_format=0;" \
+    10 "PRAGMA legacy_file_format;" \
+    11 "PRAGMA page_size;" \
+    12 "PRAGMA page_size=512;" \
+    13 "PRAGMA page_size;" \
+    14 "PRAGMA page_size=8192;" \
+    15 "PRAGMA page_size;" \
+  ]
+
+  set result [list]; set i 0
+
+  foreach j [lsort -integer [array names sql]] {
+    incr i
+
+    set command($i,1) [$connection -alias CreateCommand]
+    $command($i,1) CommandText $sql($j)
+
+    lappend result [$command($i,1) ExecuteNonQuery]
+
+    set command($i,2) [$connection -alias CreateCommand]
+    $command($i,2) CommandText $sql($j)
+
+    lappend result [$command($i,2) ExecuteScalar]
+  }
+
+  sql execute $db {
+    CREATE TABLE t1(x, y);
+    INSERT INTO t1 (x, y) VALUES(1, RANDOMBLOB(1048576));
+    INSERT INTO t1 (x, y) VALUES(2, RANDOMBLOB(1048576));
+    INSERT INTO t1 (x, y) VALUES(3, RANDOMBLOB(1048576));
+    INSERT INTO t1 (x, y) VALUES(4, RANDOMBLOB(1048576));
+  }
+
+  foreach j [lsort -integer [array names sql]] {
+    incr i
+
+    set command($i,1) [$connection -alias CreateCommand]
+    $command($i,1) CommandText $sql($j)
+
+    lappend result [$command($i,1) ExecuteNonQuery]
+
+    set command($i,2) [$connection -alias CreateCommand]
+    $command($i,2) CommandText $sql($j)
+
+    lappend result [$command($i,2) ExecuteScalar]
+  }
+
+  set result
+} -cleanup {
+  unset -nocomplain command
+
+  freeDbConnection
+
+  cleanupDb $fileName
+
+  unset -nocomplain result j i sql connection db fileName
+} -constraints {eagle command.object monoBug28 command.sql compile.DATA SQLite\
+System.Data.SQLite} -result {-1 normal -1 exclusive -1 exclusive -1 normal -1\
+normal -1 0 -1 {} -1 1 -1 {} -1 0 -1 1024 -1 {} -1 512 -1 {} -1 8192 -1 normal\
+-1 exclusive -1 exclusive -1 normal -1 normal -1 0 -1 {} -1 1 -1 {} -1 0 -1\
+8192 -1 {} -1 8192 -1 {} -1 8192}}
+
+###############################################################################
+
+runSQLiteTestEpilogue
+runTestEpilogue
