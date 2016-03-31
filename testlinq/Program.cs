@@ -204,6 +204,12 @@ namespace testlinq
                   {
                       return ComplexPrimaryKeyTest();
                   }
+#if NET_40 || NET_45 || NET_451 || NET_452 || NET_46 || NET_461
+              case "any":
+                  {
+                      return AnyTest();
+                  }
+#endif
               default:
                   {
                       Console.WriteLine("unknown test \"{0}\"", arg);
@@ -880,6 +886,24 @@ namespace testlinq
 
           return 0;
       }
+
+#if NET_40 || NET_45 || NET_451 || NET_452 || NET_46 || NET_461
+      private static int AnyTest()
+      {
+          using (northwindEFEntities db = new northwindEFEntities())
+          {
+              List<long> orderIds1 = db.Orders.Select(x => x.OrderID).ToList();
+
+              List<long> orderIds2 = db.OrderDetails.Select(
+                  x => x.OrderID).Where(x => orderIds1.Any(y => y == x)).ToList();
+
+              foreach (long id in orderIds2)
+                  Console.WriteLine(id);
+          }
+
+          return 0;
+      }
+#endif
 
       private static int DateTimeTest()
       {
