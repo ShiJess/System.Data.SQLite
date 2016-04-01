@@ -200,6 +200,24 @@ namespace testlinq
                       return RoundTest();
                   }
 #endif
+              case "guidcollation":
+                  {
+                      bool value = false;
+
+                      if (args.Length > 1)
+                      {
+                          if (!bool.TryParse(args[1], out value))
+                          {
+                              Console.WriteLine(
+                                  "cannot parse \"{0}\" as boolean",
+                                  args[1]);
+
+                              return 1;
+                          }
+                      }
+
+                      return GuidCollation(value);
+                  }
               case "complexprimarykey":
                   {
                       return ComplexPrimaryKeyTest();
@@ -774,6 +792,39 @@ namespace testlinq
           return 0;
       }
 #endif
+
+      private static int GuidCollation(bool binaryGuid)
+      {
+          Environment.SetEnvironmentVariable(
+              "AppendManifestToken_SQLiteProviderManifest",
+              String.Format(";BinaryGUID={0};", binaryGuid));
+
+          using (northwindEFEntities db = new northwindEFEntities())
+          {
+              //
+              // NOTE: Always results in NotSupportedException due
+              //       to the use of the ToString method.
+              //
+              //var query = db.Suppliers.Where(
+              //    u => u.ContactName.ToString() ==
+              //        "5D7991DA-FB99-6CB9-6487-7493F7F62E09");
+              //
+              var query = db.Suppliers.Where(
+                  u => u.ContactName.ToString() ==
+                      "5D7991DA-FB99-6CB9-6487-7493F7F62E09");
+
+              foreach (var o in query)
+              {
+                  Console.WriteLine(o.ContactName);
+              }
+          }
+
+          Environment.SetEnvironmentVariable(
+              "AppendManifestToken_SQLiteProviderManifest",
+              null);
+
+          return 0;
+      }
 
       private static int ComplexPrimaryKeyTest()
       {
