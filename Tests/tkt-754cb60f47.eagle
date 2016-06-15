@@ -1,0 +1,60 @@
+###############################################################################
+#
+# tkt-754cb60f47.eagle --
+#
+# Written by Joe Mistachkin.
+# Released to the public domain, use at your own risk!
+#
+###############################################################################
+
+package require Eagle
+package require Eagle.Library
+package require Eagle.Test
+
+runTestPrologue
+
+###############################################################################
+
+package require System.Data.SQLite.Test
+runSQLiteTestPrologue
+
+###############################################################################
+
+runTest {test tkt-754cb60f47-1.1 {GetDataTypeName w/computed columns} -setup {
+  setupDb [set fileName tkt-754cb60f47-1.1.db]
+} -body {
+  sql execute $db {
+    CREATE TABLE t1(x TEXT, y INTEGER);
+    INSERT INTO t1 (x, y) VALUES('test', 12345);
+  }
+
+  set dataReader [sql execute -execute reader -format datareader -alias $db {
+    SELECT x, y, DATETIME('now') AS w, SUBSTR(x, 1, 2) AS z FROM t1;
+  }]
+
+  $dataReader Read
+
+  list [$dataReader GetName 0] [$dataReader GetName 1] \
+      [$dataReader GetName 2] [$dataReader GetName 3] \
+      [$dataReader GetValue 0] [$dataReader GetValue 1] \
+      [$dataReader GetValue 2] [$dataReader GetValue 3] \
+      [$dataReader GetDataTypeName 0] [$dataReader GetDataTypeName 1] \
+      [$dataReader GetDataTypeName 2] [$dataReader GetDataTypeName 3] \
+      [$dataReader GetFieldType 0] [$dataReader GetFieldType 1] \
+      [$dataReader GetFieldType 2] [$dataReader GetFieldType 3]
+} -cleanup {
+  unset -nocomplain dataReader
+
+  cleanupDb $fileName
+
+  unset -nocomplain db fileName
+} -constraints \
+{eagle monoBug28 command.sql compile.DATA SQLite System.Data.SQLite} -match \
+regexp -result {^x y w z test 12345 \{\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\} te\
+TEXT INTEGER \{\} \{\} System\.String System\.Int64 System\.String\
+System\.String$}}
+
+###############################################################################
+
+runSQLiteTestEpilogue
+runTestEpilogue
