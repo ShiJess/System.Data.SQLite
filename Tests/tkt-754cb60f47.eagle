@@ -48,11 +48,10 @@ runTest {test tkt-754cb60f47-1.1 {GetDataTypeName w/computed columns} -setup {
   cleanupDb $fileName
 
   unset -nocomplain db fileName
-} -constraints \
-{eagle monoBug28 command.sql compile.DATA SQLite System.Data.SQLite} -match \
-regexp -result {^x y w z test 12345 \{\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\} te\
-TEXT INTEGER \{\} \{\} System\.String System\.Int64 System\.String\
-System\.String$}}
+} -constraints {eagle command.object monoBug28 command.sql compile.DATA SQLite\
+System.Data.SQLite} -match regexp -result {^x y w z test 12345\
+\{\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\} te TEXT INTEGER \{\} \{\}\
+System\.String System\.Int64 System\.String System\.String$}}
 
 ###############################################################################
 
