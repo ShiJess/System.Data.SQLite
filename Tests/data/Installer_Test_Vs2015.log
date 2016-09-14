@@ -1,5 +1,5 @@
 Installer.exe: #[getLineNumber]: Configuration.Process: No actual changes will be made to this system because "what-if" mode is enabled.
-Installer.exe: #[getLineNumber]: Configuration.IsSystemEf6AssemblyAvailable: Entity Framework 6 assembly was resolved to "[file nativename [file join [getBuildDirectory false] EntityFramework.dll]]".
+Installer.exe: #[getLineNumber]: Configuration.IsSystemEf6AssemblyAvailable: Entity Framework 6 assembly was resolved to "[file nativename [file join [getBuildDirectory true] EntityFramework.dll]]".
 Installer.exe: #[getLineNumber]: Installer.Main: GacInstall: assemblyPath = "[file nativename [file join [getBuildDirectory false] System.Data.SQLite.dll]]"
 Installer.exe: #[getLineNumber]: Installer.Main: GacInstall: assemblyPath = "[file nativename [file join [getBuildDirectory false] System.Data.SQLite.Linq.dll]]"
 Installer.exe: #[getLineNumber]: Installer.Main: GacInstall: assemblyPath = "[file nativename [file join [getBuildDirectory false] System.Data.SQLite.EF6.dll]]"
