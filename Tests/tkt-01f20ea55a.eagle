@@ -34,11 +34,6 @@ set instanceValue(1) [object create -alias DateTime $ticksValue(1) Utc]
 
 ###############################################################################
 
-set iso8601Value(0) [$instanceValue(0) ToString [getDateTimeFormat]]
-set iso8601Value(1) [$instanceValue(1) ToString [getDateTimeFormat]]
-
-###############################################################################
-
 runTest {test tkt-01f20ea55a-1.1 {DateTimeKind with DataTable} -setup {
   proc dateTimeValueCallback { dataTable dataRow index value } {
     if {[object isoftype $value DateTime]} then {
@@ -71,10 +66,18 @@ runTest {test tkt-01f20ea55a-1.1 {DateTimeKind with DataTable} -setup {
 
   set dataTable [object create -alias System.Data.DataTable]
 
+  set dataColumn(x) [object create -alias System.Data.DataColumn x]
+  set dataColumn(y) [object create -alias System.Data.DataColumn y]
+
+  $dataColumn(y) DataType DateTime; $dataColumn(y) DateTimeMode Utc
+
+  $dataTable Columns.Add $dataColumn(x)
+  $dataTable Columns.Add $dataColumn(y)
+
   $dataAdapter Fill $dataTable
   getRowsFromDataTable $dataTable dateTimeValueCallback
 } -cleanup {
-  unset -nocomplain dataTable dataAdapter command
+  unset -nocomplain dataColumn dataTable dataAdapter command
 
   freeDbConnection
 
@@ -85,12 +88,12 @@ runTest {test tkt-01f20ea55a-1.1 {DateTimeKind with DataTable} -setup {
   rename dateTimeValueCallback ""
 } -constraints {eagle command.object monoBug28 monoBug211 command.sql\
 compile.DATA SQLite System.Data.SQLite} -result {{{x 1} y} {{x 2} {y\
-{Unspecified {2016-10-01 12:34:56.8765401}}}} {{x 3} {y {Utc {2016-10-01\
-12:34:56.8765401}}}}}}
+{Utc {2016-10-01 12:34:56.8765401Z}}}} {{x 3} {y {Utc {2016-10-01\
+12:34:56.8765401Z}}}}}}
 
 ###############################################################################
 
-unset -nocomplain iso8601Value instanceValue ticksValue rawValue
+unset -nocomplain instanceValue ticksValue rawValue
 
 ###############################################################################
 
