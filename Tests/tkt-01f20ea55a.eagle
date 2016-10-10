@@ -1,0 +1,98 @@
+###############################################################################
+#
+# tkt-01f20ea55a.eagle --
+#
+# Written by Joe Mistachkin.
+# Released to the public domain, use at your own risk!
+#
+###############################################################################
+
+package require Eagle
+package require Eagle.Library
+package require Eagle.Test
+
+runTestPrologue
+
+###############################################################################
+
+package require System.Data.SQLite.Test
+runSQLiteTestPrologue
+
+###############################################################################
+
+set rawValue(0) "2016-10-01 12:34:56.8765401"
+
+###############################################################################
+
+set ticksValue(0) [getDateTimeTicks $rawValue(0)]
+set ticksValue(1) [getDateTimeTicks $rawValue(0) false]
+
+###############################################################################
+
+set instanceValue(0) [object create -alias DateTime $ticksValue(0)]
+set instanceValue(1) [object create -alias DateTime $ticksValue(1) Utc]
+
+###############################################################################
+
+set iso8601Value(0) [$instanceValue(0) ToString [getDateTimeFormat]]
+set iso8601Value(1) [$instanceValue(1) ToString [getDateTimeFormat]]
+
+###############################################################################
+
+runTest {test tkt-01f20ea55a-1.1 {DateTimeKind with DataTable} -setup {
+  proc dateTimeValueCallback { dataTable dataRow index value } {
+    if {[object isoftype $value DateTime]} then {
+      return [list [$value Kind] [$value ToString [getDateTimeFormat]]]
+    } else {
+      continue
+    }
+  }
+
+  setupDb [set fileName tkt-01f20ea55a-1.1.db] "" ISO8601 Utc
+} -body {
+  set connection [getDbConnection]
+
+  sql execute $db [subst {
+    CREATE TABLE t1 (x, y DATETIME);
+    INSERT INTO t1 (x, y) VALUES(1, NULL);
+  }]
+
+  sql execute $db "INSERT INTO t1 (x, y) VALUES(2, ?);" \
+      [list param1 DateTime $instanceValue(0)]
+
+  sql execute $db "INSERT INTO t1 (x, y) VALUES(3, ?);" \
+      [list param1 DateTime $instanceValue(1)]
+
+  set command [$connection -alias CreateCommand]
+  $command CommandText {SELECT x, y FROM t1 ORDER BY x;}
+
+  set dataAdapter [object create -alias \
+      System.Data.SQLite.SQLiteDataAdapter $command]
+
+  set dataTable [object create -alias System.Data.DataTable]
+
+  $dataAdapter Fill $dataTable
+  getRowsFromDataTable $dataTable dateTimeValueCallback
+} -cleanup {
+  unset -nocomplain dataTable dataAdapter command
+
+  freeDbConnection
+
+  cleanupDb $fileName
+
+  unset -nocomplain connection db fileName
+
+  rename dateTimeValueCallback ""
+} -constraints {eagle command.object monoBug28 monoBug211 command.sql\
+compile.DATA SQLite System.Data.SQLite} -result {{{x 1} y} {{x 2} {y\
+{Unspecified {2016-10-01 12:34:56.8765401}}}} {{x 3} {y {Utc {2016-10-01\
+12:34:56.8765401}}}}}}
+
+###############################################################################
+
+unset -nocomplain iso8601Value instanceValue ticksValue rawValue
+
+###############################################################################
+
+runSQLiteTestEpilogue
+runTestEpilogue
