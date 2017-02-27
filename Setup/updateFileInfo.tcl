@@ -36,11 +36,11 @@ proc getFileSize { fileName } {
 
 proc getFileHash { fileName } {
   #
-  # NOTE: Return the SHA1 hash of the file, making use of Fossil via [exec] to
+  # NOTE: Return the SHA3 hash of the file, making use of Fossil via [exec] to
   #       actually calculate it.
   #
-  return [string trim [lindex [regexp -inline -nocase -- {[0-9A-F]{40} } \
-      [exec fossil sha1sum $fileName]] 0]]
+  return [string trim [lindex [regexp -inline -nocase -- {[0-9A-F]{56} } \
+      [exec fossil sha3sum $fileName]] 0]]
 }
 
 #
@@ -85,22 +85,22 @@ if {![info exists outputDirectory] || \
 #
 # NOTE: Setup the regular expression patterns with the necessary captures.
 #       These patterns are mostly non-greedy; however, at the end we need to
-#       match exactly 40 hexadecimal characters.  In theory, in Tcl, this could
+#       match exactly 56 hexadecimal characters.  In theory, in Tcl, this could
 #       have an undefined result due to the mixing of greedy and non-greedy
 #       quantifiers; however, in practice, this seems to work properly.  Also,
 #       this pattern assumes a particular structure for the [HTML] file to be
 #       updated.
 #
 set pattern1 {<a\
-    href=".*?/(.*?\.(?:exe|zip|nupkg))">.*?\((\d+?\.\d+?) MiB\).*?sha1:\
-    ([0-9A-F]{40})}
+    href=".*?/(.*?\.(?:exe|zip|nupkg))">.*?\((\d+?\.\d+?) MiB\).*?sha3:\
+    ([0-9A-F]{56})}
 
 set pattern2 {<a\
     href=".*?/package/.*?/\d+\.\d+\.\d+\.\d+">(.*?)</a>.*?\((\d+?\.\d+?)\
-    MiB\).*?sha1: ([0-9A-F]{40})}
+    MiB\).*?sha3: ([0-9A-F]{56})}
 
 set pattern3 {href="/downloads/(.*?)"}
-set pattern4 {\(sha1: ([0-9A-F]{40})\)}
+set pattern4 {\(sha3: ([0-9A-F]{56})\)}
 set pattern5 {\((\d+?\.\d+?) MiB\)}
 
 #
@@ -185,7 +185,7 @@ foreach pattern [list $pattern1 $pattern2] {
 }
 
 #
-# NOTE: Attempt to verify that each file name now has the correct SHA1 hash
+# NOTE: Attempt to verify that each file name now has the correct SHA3 hash
 #       associated with it on the page.
 #
 foreach {dummy3 fileName} [regexp -all -inline -nocase -- $pattern3 $data] \
@@ -212,7 +212,7 @@ foreach {dummy3 fileName} [regexp -all -inline -nocase -- $pattern3 $data] \
   set fullFileHash [getFileHash $fullFileName]
 
   if {$fileHash ne $fullFileHash} then {
-    puts stdout "ERROR: SHA1 hash mismatch for\
+    puts stdout "ERROR: SHA3 hash mismatch for\
         file \"$fullFileName\", have \"$fileHash\" (from data),\
         need \"$fullFileHash\" (calculated)."
   }

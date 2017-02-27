@@ -41,7 +41,8 @@ proc getSha1Hashes { varName } {
         set fileName [string map [list \\s " "] [lindex $fields 1]]
         set hash [lindex $fields 2]
 
-        if {[regexp -- {[0-9a-f]{40}} $hash]} then {
+        if {[regexp -- {[0-9a-f]{40}} $hash] || \
+            [regexp -- {[0-9a-f]{56}} $hash]} then {
           set hashes($fileName) $hash; incr result
         }
       }
@@ -57,7 +58,8 @@ proc getSha1Sum { fileName } {
   set hash [string range [exec -success Success -nocarriagereturns \
       -trimall -- $fossil sha1sum [appendArgs \" $fileName \"]] 0 39]
 
-  if {[regexp -- {[0-9a-f]{40}} $hash]} then {
+  if {[regexp -- {[0-9a-f]{40}} $hash] || \
+      [regexp -- {[0-9a-f]{56}} $hash]} then {
     return $hash
   }
 
