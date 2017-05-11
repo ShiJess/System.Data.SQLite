@@ -47,6 +47,15 @@ namespace System.Data.SQLite
   internal static class DebugData
   {
       #region Private Data
+#if DEBUG
+      /// <summary>
+      /// This lock is used to protect several static fields.
+      /// </summary>
+      private static readonly object staticSyncRoot = new object();
+#endif
+
+      /////////////////////////////////////////////////////////////////////////
+
       #region Critical Handle Counts (Debug Build Only)
 #if COUNT_HANDLE
       //
@@ -70,13 +79,6 @@ namespace System.Data.SQLite
       #region Settings Read Counts (Debug Build Only)
 #if DEBUG
       /// <summary>
-      /// This lock is used to protect the static
-      /// <see cref="settingReadCounts" /> field.
-      /// </summary>
-      private static readonly object staticSyncRoot = new object();
-
-      /////////////////////////////////////////////////////////////////////////
-      /// <summary>
       /// This dictionary stores the read counts for the runtime configuration
       /// settings.  This information is only recorded when compiled in the
       /// "Debug" build configuration.
@@ -93,6 +95,19 @@ namespace System.Data.SQLite
       private static Dictionary<string, int> settingFileReadCounts;
 #endif
       #endregion
+
+      /////////////////////////////////////////////////////////////////////////
+
+      #region Other Counts (Debug Build Only)
+#if DEBUG
+      /// <summary>
+      /// This dictionary stores miscellaneous counts used for debugging
+      /// purposes.  This information is only recorded when compiled in the
+      /// "Debug" build configuration.
+      /// </summary>
+      private static Dictionary<string, int> otherCounts;
+#endif
+      #endregion
       #endregion
 
       /////////////////////////////////////////////////////////////////////////
@@ -104,7 +119,7 @@ namespace System.Data.SQLite
       /// the runtime configuration settings.  These numbers are used for
       /// debugging and testing purposes only.
       /// </summary>
-      public static void InitializeSettingReadCounts()
+      public static void Initialize()
       {
           lock (staticSyncRoot)
           {
@@ -118,6 +133,9 @@ namespace System.Data.SQLite
 
               if (settingFileReadCounts == null)
                   settingFileReadCounts = new Dictionary<string, int>();
+
+              if (otherCounts == null)
+                  otherCounts = new Dictionary<string, int>();
           }
       }
 
@@ -168,6 +186,32 @@ namespace System.Data.SQLite
                       else
                           settingReadCounts.Add(name, 1);
                   }
+              }
+          }
+      }
+
+      /////////////////////////////////////////////////////////////////////////
+
+      /// <summary>
+      /// Increments the specified counter.
+      /// </summary>
+      /// <param name="name">
+      /// The name of the counter being incremented.
+      /// </param>
+      public static void IncrementOtherCount(
+          string name
+          )
+      {
+          lock (staticSyncRoot)
+          {
+              if (otherCounts != null)
+              {
+                  int count;
+
+                  if (otherCounts.TryGetValue(name, out count))
+                      otherCounts[name] = count + 1;
+                  else
+                      otherCounts.Add(name, 1);
               }
           }
       }
@@ -638,6 +682,22 @@ namespace System.Data.SQLite
       /// SQLite interop assembly into the current process.
       /// </summary>
       private static Dictionary<string, string> processorArchitecturePlatforms;
+
+      /////////////////////////////////////////////////////////////////////////
+      /// <summary>
+      /// This is the cached return value from the
+      /// <see cref="GetAssemblyDirectory" /> method -OR- null if that method
+      /// has never returned a valid value.
+      /// </summary>
+      private static string cachedAssemblyDirectory;
+
+      /////////////////////////////////////////////////////////////////////////
+      /// <summary>
+      /// This is the cached return value from the
+      /// <see cref="GetXmlConfigFileName" /> method -OR- null if that method
+      /// has never returned a valid value.
+      /// </summary>
+      private static string cachedXmlConfigFileName;
       #endregion
 
       /////////////////////////////////////////////////////////////////////////
@@ -670,10 +730,11 @@ namespace System.Data.SQLite
           #region Debug Build Only
 #if DEBUG
           //
-          // NOTE: Create the list of statistics that will contain the
+          // NOTE: Create the lists of statistics that will contain
+          //       various counts used in debugging, including the
           //       number of times each setting value has been read.
           //
-          DebugData.InitializeSettingReadCounts();
+          DebugData.Initialize();
 #endif
           #endregion
 
@@ -772,6 +833,56 @@ namespace System.Data.SQLite
 
       /////////////////////////////////////////////////////////////////////////
       /// <summary>
+      /// Resets the cached XML configuration file name value, thus forcing the
+      /// next call to <see cref="GetCachedXmlConfigFileName" /> method to rely
+      /// upon the <see cref="GetXmlConfigFileName" /> method to fetch the
+      /// XML configuration file name.
+      /// </summary>
+      private static void ResetCachedXmlConfigFileName()
+      {
+          #region Debug Build Only
+#if DEBUG
+          DebugData.IncrementOtherCount("Method_ResetCachedXmlConfigFileName");
+#endif
+          #endregion
+
+          lock (staticSyncRoot)
+          {
+              cachedXmlConfigFileName = null;
+          }
+      }
+
+      /////////////////////////////////////////////////////////////////////////
+      /// <summary>
+      /// Queries and returns the cached XML configuration file name for the
+      /// assembly containing the managed System.Data.SQLite components, if
+      /// available.  If the cached XML configuration file name value is not
+      /// available, the <see cref="GetXmlConfigFileName" /> method will
+      /// be used to obtain the XML configuration file name.
+      /// </summary>
+      /// <returns>
+      /// The XML configuration file name -OR- null if it cannot be determined
+      /// or does not exist.
+      /// </returns>
+      private static string GetCachedXmlConfigFileName()
+      {
+          #region Debug Build Only
+#if DEBUG
+          DebugData.IncrementOtherCount("Method_GetCachedXmlConfigFileName");
+#endif
+          #endregion
+
+          lock (staticSyncRoot)
+          {
+              if (cachedXmlConfigFileName != null)
+                  return cachedXmlConfigFileName;
+          }
+
+          return GetXmlConfigFileName();
+      }
+
+      /////////////////////////////////////////////////////////////////////////
+      /// <summary>
       /// Queries and returns the XML configuration file name for the assembly
       /// containing the managed System.Data.SQLite components.
       /// </summary>
@@ -781,6 +892,12 @@ namespace System.Data.SQLite
       /// </returns>
       private static string GetXmlConfigFileName()
       {
+          #region Debug Build Only
+#if DEBUG
+          DebugData.IncrementOtherCount("Method_GetXmlConfigFileName");
+#endif
+          #endregion
+
           string directory;
           string fileName;
 
@@ -789,14 +906,28 @@ namespace System.Data.SQLite
           fileName = MaybeCombinePath(directory, XmlConfigFileName);
 
           if (File.Exists(fileName))
+          {
+              lock (staticSyncRoot)
+              {
+                  cachedXmlConfigFileName = fileName;
+              }
+
               return fileName;
+          }
 #endif
 
-          directory = GetAssemblyDirectory();
+          directory = GetCachedAssemblyDirectory();
           fileName = MaybeCombinePath(directory, XmlConfigFileName);
 
           if (File.Exists(fileName))
+          {
+              lock (staticSyncRoot)
+              {
+                  cachedXmlConfigFileName = fileName;
+              }
+
               return fileName;
+          }
 
           return null;
       }
@@ -1063,7 +1194,7 @@ namespace System.Data.SQLite
       {
           if (!String.IsNullOrEmpty(value))
           {
-              string directory = GetAssemblyDirectory();
+              string directory = GetCachedAssemblyDirectory();
 
               if (!String.IsNullOrEmpty(directory))
               {
@@ -1277,7 +1408,7 @@ namespace System.Data.SQLite
           /////////////////////////////////////////////////////////////////////
 
           return GetSettingValueViaXmlConfigFile(
-              GetXmlConfigFileName(), name, @default, expand);
+              GetCachedXmlConfigFileName(), name, @default, expand);
       }
 
       /////////////////////////////////////////////////////////////////////////
@@ -1449,6 +1580,55 @@ namespace System.Data.SQLite
 
       /////////////////////////////////////////////////////////////////////////
       /// <summary>
+      /// Resets the cached assembly directory value, thus forcing the next
+      /// call to <see cref="GetCachedAssemblyDirectory" /> method to rely
+      /// upon the <see cref="GetAssemblyDirectory" /> method to fetch the
+      /// assembly directory.
+      /// </summary>
+      private static void ResetCachedAssemblyDirectory()
+      {
+          #region Debug Build Only
+#if DEBUG
+          DebugData.IncrementOtherCount("Method_ResetCachedAssemblyDirectory");
+#endif
+          #endregion
+
+          lock (staticSyncRoot)
+          {
+              cachedAssemblyDirectory = null;
+          }
+      }
+
+      /////////////////////////////////////////////////////////////////////////
+      /// <summary>
+      /// Queries and returns the cached directory for the assembly currently
+      /// being executed, if available.  If the cached assembly directory value
+      /// is not available, the <see cref="GetAssemblyDirectory" /> method will
+      /// be used to obtain the assembly directory.
+      /// </summary>
+      /// <returns>
+      /// The directory for the assembly currently being executed -OR- null if
+      /// it cannot be determined.
+      /// </returns>
+      private static string GetCachedAssemblyDirectory()
+      {
+          #region Debug Build Only
+#if DEBUG
+          DebugData.IncrementOtherCount("Method_GetCachedAssemblyDirectory");
+#endif
+          #endregion
+
+          lock (staticSyncRoot)
+          {
+              if (cachedAssemblyDirectory != null)
+                  return cachedAssemblyDirectory;
+          }
+
+          return GetAssemblyDirectory();
+      }
+
+      /////////////////////////////////////////////////////////////////////////
+      /// <summary>
       /// Queries and returns the directory for the assembly currently being
       /// executed.
       /// </summary>
@@ -1458,6 +1638,12 @@ namespace System.Data.SQLite
       /// </returns>
       private static string GetAssemblyDirectory()
       {
+          #region Debug Build Only
+#if DEBUG
+          DebugData.IncrementOtherCount("Method_GetAssemblyDirectory");
+#endif
+          #endregion
+
           try
           {
               Assembly assembly = Assembly.GetExecutingAssembly();
@@ -1486,6 +1672,11 @@ namespace System.Data.SQLite
 
               if (String.IsNullOrEmpty(directory))
                   return null;
+
+              lock (staticSyncRoot)
+              {
+                  cachedAssemblyDirectory = directory;
+              }
 
               return directory;
           }
