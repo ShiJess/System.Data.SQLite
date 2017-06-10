@@ -368,6 +368,33 @@ namespace System.Data.SQLite
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
+    internal long? GetRowId(
+        string databaseName,
+        string tableName
+        )
+    {
+        if ((_keyInfo != null) &&
+            (databaseName != null) &&
+            (tableName != null))
+        {
+            for (int i = 0; i < _keyInfo.Length; i++)
+            {
+                if (_keyInfo[i].databaseName == databaseName &&
+                    _keyInfo[i].tableName == tableName)
+                {
+                    long rowid = _stmt._sql.GetRowIdForCursor(_stmt, _keyInfo[i].cursor);
+
+                    if (rowid != 0)
+                        return rowid;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
     #region IDisposable Members
     public void Dispose()
     {
@@ -442,7 +469,7 @@ namespace System.Data.SQLite
       get { return (_keyInfo == null) ? 0 : _keyInfo.Length; }
     }
 
-    internal void Sync(int i)
+    private void Sync(int i)
     {
       Sync();
       if (_keyInfo[i].cursor == -1)
@@ -453,7 +480,7 @@ namespace System.Data.SQLite
     /// Make sure all the subqueries are open and ready and sync'd with the current rowid
     /// of the table they're supporting
     /// </summary>
-    internal void Sync()
+    private void Sync()
     {
       if (_isValid == true) return;
 

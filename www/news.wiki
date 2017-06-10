@@ -45,6 +45,13 @@
 <div align="center"><h2><b>Version History</b></h2></div>
 
 <p>
+    <b>1.0.105.2 - June 12, 2017</b>
+</p>
+<ul>
+    <li>Updated to [https://www.sqlite.org/releaselog/3_19_3.html|SQLite 3.19.3].</li>
+    <li>Fix issues that prevented SQLiteBlob creation from succeeding for tables that did not have an integer primary key.</li>
+</ul>
+<p>
     <b>1.0.105.1 - May 15, 2017</b>
 </p>
 <ul>
