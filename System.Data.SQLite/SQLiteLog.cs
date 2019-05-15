@@ -105,7 +105,6 @@ namespace System.Data.SQLite
 
         ///////////////////////////////////////////////////////////////////////
 
-#if !USE_INTEROP_DLL || !INTEROP_LOG
         /// <summary>
         /// The log callback passed to native SQLite engine.  This must live
         /// as long as the SQLite library has a pointer to it.
@@ -118,12 +117,11 @@ namespace System.Data.SQLite
         /// The base SQLite object to interop with.
         /// </summary>
         private static SQLiteBase _sql;
-#endif
 
         ///////////////////////////////////////////////////////////////////////
 
         /// <summary>
-        /// The number of times that the <see cref="Initialize(string)" />
+        /// The number of times that the <see cref="Initialize(string,bool)" />
         /// has been called when the logging subystem was actually eligible
         /// to be initialized (i.e. without the "No_SQLiteLog" environment
         /// variable being set).
@@ -152,7 +150,26 @@ namespace System.Data.SQLite
         /// </summary>
         public static void Initialize()
         {
-            Initialize(null);
+            Initialize(false);
+        }
+
+        ///////////////////////////////////////////////////////////////////////
+
+        /// <summary>
+        /// Initializes the SQLite logging facilities.
+        /// </summary>
+        /// <param name="managedOnly">
+        /// When this parameter is non-zero, the native logging callback
+        /// provided by the SQLite interop assembly will not be used, even
+        /// if it is available.  When the native logging callback provided
+        /// by the SQLite interop assembly is not available, the value of
+        /// this parameter is ignored.
+        /// </param>
+        public static void Initialize(
+            bool managedOnly
+            )
+        {
+            Initialize(null, managedOnly);
         }
 
         ///////////////////////////////////////////////////////////////////////
@@ -164,8 +181,16 @@ namespace System.Data.SQLite
         /// The name of the managed class that called this method.  This
         /// parameter may be null.
         /// </param>
+        /// <param name="managedOnly">
+        /// When this parameter is non-zero, the native logging callback
+        /// provided by the SQLite interop assembly will not be used, even
+        /// if it is available.  When the native logging callback provided
+        /// by the SQLite interop assembly is not available, the value of
+        /// this parameter is ignored.
+        /// </param>
         internal static void Initialize(
-            string className
+            string className,
+            bool managedOnly
             )
         {
             //
@@ -260,52 +285,57 @@ namespace System.Data.SQLite
                 ///////////////////////////////////////////////////////////////
 
 #if USE_INTEROP_DLL && INTEROP_LOG
-                //
-                // NOTE: Attempt to setup interop assembly log callback.
-                //       This may fail, e.g. if the SQLite core library
-                //       has somehow been initialized.  An exception will
-                //       be raised in that case.
-                //
-                SQLiteErrorCode rc = SQLite3.ConfigureLogForInterop(
-                    className);
-
-                if (rc != SQLiteErrorCode.Ok)
+                if (!managedOnly)
                 {
-                    throw new SQLiteException(rc,
-                        "Failed to configure interop assembly logging.");
-                }
-#else
-                //
-                // NOTE: Create an instance of the SQLite wrapper class.
-                //
-                if (_sql == null)
-                {
-                    _sql = new SQLite3(
-                        SQLiteDateFormats.Default, DateTimeKind.Unspecified,
-                        null, IntPtr.Zero, null, false);
-                }
-
-                //
-                // NOTE: Create a single "global" (i.e. per-process) callback
-                //       to register with SQLite.  This callback will pass the
-                //       event on to any registered handler.  We only want to
-                //       do this once.
-                //
-                if (_callback == null)
-                {
-                    _callback = new SQLiteLogCallback(LogCallback);
-
-                    SQLiteErrorCode rc = _sql.SetLogCallback(_callback);
+                    //
+                    // NOTE: Attempt to setup interop assembly log callback.
+                    //       This may fail, e.g. if the SQLite core library
+                    //       has somehow been initialized.  An exception will
+                    //       be raised in that case.
+                    //
+                    SQLiteErrorCode rc = SQLite3.ConfigureLogForInterop(
+                        className);
 
                     if (rc != SQLiteErrorCode.Ok)
                     {
-                        _callback = null; /* UNDO */
-
                         throw new SQLiteException(rc,
-                            "Failed to configure managed assembly logging.");
+                            "Failed to configure interop assembly logging.");
                     }
                 }
+                else
 #endif
+                {
+                    //
+                    // NOTE: Create an instance of the SQLite wrapper class.
+                    //
+                    if (_sql == null)
+                    {
+                        _sql = new SQLite3(SQLiteDateFormats.Default,
+                            DateTimeKind.Unspecified, null, IntPtr.Zero,
+                            null, false);
+                    }
+
+                    //
+                    // NOTE: Create single global (i.e. per-process) callback
+                    //       to register with SQLite.  The callback will pass
+                    //       the event on to any registered handler.  We only
+                    //       want to do this once.
+                    //
+                    if (_callback == null)
+                    {
+                        _callback = new SQLiteLogCallback(LogCallback);
+
+                        SQLiteErrorCode rc = _sql.SetLogCallback(_callback);
+
+                        if (rc != SQLiteErrorCode.Ok)
+                        {
+                            _callback = null; /* UNDO */
+
+                            throw new SQLiteException(rc,
+                                "Failed to configure managed assembly logging.");
+                        }
+                    }
+                }
 
                 ///////////////////////////////////////////////////////////////
 

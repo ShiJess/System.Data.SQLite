@@ -1766,7 +1766,7 @@ namespace System.Data.SQLite
       UnsafeNativeMethods.Initialize();
 #endif
 
-      SQLiteLog.Initialize(typeof(SQLiteConnection).Name);
+      SQLiteLog.Initialize(typeof(SQLiteConnection).Name, false);
 
 #if !PLATFORM_COMPACTFRAMEWORK && !INTEROP_LEGACY_CLOSE && SQLITE_STANDARD
       //
