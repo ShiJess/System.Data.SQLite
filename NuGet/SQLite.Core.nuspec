@@ -23,9 +23,6 @@
     <dependencies>
       <group targetFramework="net20" />
       <group targetFramework="net40" />
-      <group targetFramework="net45" />
-      <group targetFramework="net451" />
-      <group targetFramework="net46" />
       <group targetFramework="netstandard2.0" />
     </dependencies>
   </metadata>

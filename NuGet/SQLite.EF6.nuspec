@@ -24,15 +24,6 @@
       <group targetFramework="net40">
         <dependency id="EntityFramework" version="6.3.0" />
       </group>
-      <group targetFramework="net45">
-        <dependency id="EntityFramework" version="6.3.0" />
-      </group>
-      <group targetFramework="net451">
-        <dependency id="EntityFramework" version="6.3.0" />
-      </group>
-      <group targetFramework="net46">
-        <dependency id="EntityFramework" version="6.3.0" />
-      </group>
       <group targetFramework="netstandard2.1">
         <dependency id="EntityFramework" version="6.3.0" />
       </group>
