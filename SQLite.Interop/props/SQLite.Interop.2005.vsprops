@@ -34,7 +34,7 @@
 	/>
 	<UserMacro
 		Name="INTEROP_RC_VERSION"
-		Value="1,0,112,0"
+		Value="1,0,112,1"
 		PerformEnvironmentSet="true"
 	/>
 	<UserMacro

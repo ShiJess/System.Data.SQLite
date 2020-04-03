@@ -132,7 +132,7 @@ $version(full)}
 
 runTest {test version-1.7 {'SQLite.Designer' binary version} -body {
   file version $sqliteDesignerDllFile
-} -constraints {eagle file_SQLite.Designer.dll} -result $version(full)}
+} -constraints {eagle skip file_SQLite.Designer.dll} -result $version(full)}
 
 ###############################################################################
 
@@ -143,7 +143,7 @@ runTest {test version-1.8 {'SQLite.Designer' assembly version} -body {
   $assemblyName Version.ToString
 } -cleanup {
   unset -nocomplain assemblyName
-} -constraints {eagle command.object file_SQLite.Designer.dll} -result \
+} -constraints {eagle skip command.object file_SQLite.Designer.dll} -result \
 $version(full)}
 
 ###############################################################################
@@ -792,11 +792,13 @@ lappend patterns \
 # SQLite.Designer/AssemblyInfo.cs
 ###############################################################################
 
-lappend patterns \
-    [appendArgs AssemblyVersion\\(\" [string map [list . \\.] \
-        $version(full)] \"\\)] \
-    [appendArgs AssemblyFileVersion\\(\" [string map [list . \\.] \
-        $version(full)] \"\\)]
+if {0} then {
+  lappend patterns \
+      [appendArgs AssemblyVersion\\(\" [string map [list . \\.] \
+          $version(full)] \"\\)] \
+      [appendArgs AssemblyFileVersion\\(\" [string map [list . \\.] \
+          $version(full)] \"\\)]
+}
 
 ###############################################################################
 # source.extension.vsixmanifest
@@ -1275,9 +1277,6 @@ set fileNames [list \
     [file join NuGet SQLite.x86.nuspec] \
     [file join NuGet SQLite.x86.nuspec] \
     [file join NuGet SQLite.x86.nuspec] \
-    [file join SQLite.Designer AssemblyInfo.cs] \
-    [file join SQLite.Designer AssemblyInfo.cs] \
-    [file join SQLite.Designer source.extension.vsixmanifest] \
     [file join SQLite.Interop props SQLite.Interop.2005.vsprops] \
     [file join SQLite.Interop props SQLite.Interop.2005.vsprops] \
     [file join SQLite.Interop props SQLite.Interop.2005.vsprops] \
