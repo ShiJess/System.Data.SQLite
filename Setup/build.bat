@@ -345,7 +345,7 @@ IF DEFINED NETFX472ONLY (
   )
   CALL :fn_CheckFrameworkDir v4.0.30319
   CALL :fn_CheckMsBuildDir 14.0
-  CALL :fn_CheckVisualStudioMsBuildDir 15.0 15.0
+  CALL :fn_CheckVisualStudioMsBuildDir Current 16.0
   GOTO setup_buildToolDir
 )
 
@@ -353,6 +353,15 @@ REM
 REM TODO: When the next version of Visual Studio and/or MSBuild is released,
 REM       this section may need updating.
 REM
+IF NOT DEFINED VISUALSTUDIOMSBUILDDIR (
+  CALL :fn_CheckVisualStudioMsBuildDir Current 16.0
+  IF DEFINED VISUALSTUDIOMSBUILDDIR (
+    IF NOT DEFINED YEAR (
+      SET YEAR=2017
+    )
+  )
+)
+
 IF NOT DEFINED VISUALSTUDIOMSBUILDDIR (
   CALL :fn_CheckVisualStudioMsBuildDir 15.0 15.0
   IF DEFINED VISUALSTUDIOMSBUILDDIR (
