@@ -804,9 +804,11 @@ if {0} then {
 # source.extension.vsixmanifest
 ###############################################################################
 
-lappend patterns \
-    [appendArgs <Version> [string map [list . \\.] \
-        $version(full)] </Version>]
+if {0} then {
+  lappend patterns \
+      [appendArgs <Version> [string map [list . \\.] \
+          $version(full)] </Version>]
+}
 
 ###############################################################################
 # SQLite.Interop.2005.vsprops
