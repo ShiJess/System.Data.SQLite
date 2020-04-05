@@ -443,15 +443,6 @@ lappend patterns \
     [appendArgs " targetFramework=\"net40\".*? " \
         "id=\"EntityFramework\" version=\"" [string map [list . \\.] \
         $version(ef6)] "\" "] \
-    [appendArgs " targetFramework=\"net45\".*? " \
-        "id=\"EntityFramework\" version=\"" [string map [list . \\.] \
-        $version(ef6)] "\" "] \
-    [appendArgs " targetFramework=\"net451\".*? " \
-        "id=\"EntityFramework\" version=\"" [string map [list . \\.] \
-        $version(ef6)] "\" "] \
-    [appendArgs " targetFramework=\"net46\".*? " \
-        "id=\"EntityFramework\" version=\"" [string map [list . \\.] \
-        $version(ef6)] "\" "] \
     [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
         "id=\"EntityFramework\" version=\"" [string map [list . \\.] \
         $version(ef6)] "\" "]
@@ -1177,9 +1168,6 @@ set fileNames [list \
     [file join NuGet SQLite.Core.MSIL.nuspec] \
     [file join NuGet SQLite.Core.MSIL.Beta.nuspec] \
     [file join NuGet SQLite.Core.MSIL.Test.nuspec] \
-    [file join NuGet SQLite.EF6.nuspec] \
-    [file join NuGet SQLite.EF6.nuspec] \
-    [file join NuGet SQLite.EF6.nuspec] \
     [file join NuGet SQLite.EF6.nuspec] \
     [file join NuGet SQLite.EF6.nuspec] \
     [file join NuGet SQLite.EF6.nuspec] \
