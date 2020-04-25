@@ -300,15 +300,6 @@ lappend patterns \
     [appendArgs " targetFramework=\"net40\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Core\" version=\"" $version(nuget) \
         "\" "] \
-    [appendArgs " targetFramework=\"net45\".*? " \
-        "id=\"System\\.Data\\.SQLite\\.Core\" version=\"" $version(nuget) \
-        "\" "] \
-    [appendArgs " targetFramework=\"net451\".*? " \
-        "id=\"System\\.Data\\.SQLite\\.Core\" version=\"" $version(nuget) \
-        "\" "] \
-    [appendArgs " targetFramework=\"net46\".*? " \
-        "id=\"System\\.Data\\.SQLite\\.Core\" version=\"" $version(nuget) \
-        "\" "] \
     [appendArgs " targetFramework=\"netstandard2\\.0\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Core\" version=\"" $version(nuget) \
         "\" "] \
@@ -321,25 +312,7 @@ lappend patterns \
     [appendArgs " targetFramework=\"net40\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Linq\" version=\"" $version(nuget) \
         "\" "] \
-    [appendArgs " targetFramework=\"net45\".*? " \
-        "id=\"System\\.Data\\.SQLite\\.Linq\" version=\"" $version(nuget) \
-        "\" "] \
-    [appendArgs " targetFramework=\"net451\".*? " \
-        "id=\"System\\.Data\\.SQLite\\.Linq\" version=\"" $version(nuget) \
-        "\" "] \
-    [appendArgs " targetFramework=\"net46\".*? " \
-        "id=\"System\\.Data\\.SQLite\\.Linq\" version=\"" $version(nuget) \
-        "\" "] \
     [appendArgs " targetFramework=\"net40\".*? " \
-        "id=\"System\\.Data\\.SQLite\\.EF6\" version=\"" $version(nuget) \
-        "\" "] \
-    [appendArgs " targetFramework=\"net45\".*? " \
-        "id=\"System\\.Data\\.SQLite\\.EF6\" version=\"" $version(nuget) \
-        "\" "] \
-    [appendArgs " targetFramework=\"net451\".*? " \
-        "id=\"System\\.Data\\.SQLite\\.EF6\" version=\"" $version(nuget) \
-        "\" "] \
-    [appendArgs " targetFramework=\"net46\".*? " \
         "id=\"System\\.Data\\.SQLite\\.EF6\" version=\"" $version(nuget) \
         "\" "] \
     [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
@@ -1178,15 +1151,6 @@ set fileNames [list \
     [file join Doc Extra Provider version.html] \
     [file join Doc Extra Provider version.html] \
     [file join Doc Extra Provider welcome.html] \
-    [file join NuGet SQLite.nuspec] \
-    [file join NuGet SQLite.nuspec] \
-    [file join NuGet SQLite.nuspec] \
-    [file join NuGet SQLite.nuspec] \
-    [file join NuGet SQLite.nuspec] \
-    [file join NuGet SQLite.nuspec] \
-    [file join NuGet SQLite.nuspec] \
-    [file join NuGet SQLite.nuspec] \
-    [file join NuGet SQLite.nuspec] \
     [file join NuGet SQLite.nuspec] \
     [file join NuGet SQLite.nuspec] \
     [file join NuGet SQLite.nuspec] \
