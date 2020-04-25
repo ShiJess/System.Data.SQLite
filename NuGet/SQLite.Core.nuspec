@@ -24,6 +24,7 @@
       <group targetFramework="net20" />
       <group targetFramework="net40" />
       <group targetFramework="netstandard2.0" />
+      <group targetFramework="netstandard2.1" />
     </dependencies>
   </metadata>
   <files>

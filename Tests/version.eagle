@@ -312,6 +312,9 @@ lappend patterns \
     [appendArgs " targetFramework=\"netstandard2\\.0\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Core\" version=\"" $version(nuget) \
         "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.Core\" version=\"" $version(nuget) \
+        "\" "] \
     [appendArgs " targetFramework=\"net20\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Linq\" version=\"" $version(nuget) \
         "\" "] \
@@ -337,6 +340,9 @@ lappend patterns \
         "id=\"System\\.Data\\.SQLite\\.EF6\" version=\"" $version(nuget) \
         "\" "] \
     [appendArgs " targetFramework=\"net46\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.EF6\" version=\"" $version(nuget) \
+        "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
         "id=\"System\\.Data\\.SQLite\\.EF6\" version=\"" $version(nuget) \
         "\" "]
 
@@ -364,6 +370,9 @@ lappend patterns \
     [appendArgs " targetFramework=\"netstandard2\\.0\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Core\\.Beta\" version=\"" \
         $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.Core\\.Beta\" version=\"" \
+        $version(nuget) "\" "] \
     [appendArgs " targetFramework=\"net20\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Linq\\.Beta\" version=\"" \
         $version(nuget) "\" "] \
@@ -389,6 +398,9 @@ lappend patterns \
         "id=\"System\\.Data\\.SQLite\\.EF6\\.Beta\" version=\"" \
         $version(nuget) "\" "] \
     [appendArgs " targetFramework=\"net46\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.EF6\\.Beta\" version=\"" \
+        $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
         "id=\"System\\.Data\\.SQLite\\.EF6\\.Beta\" version=\"" \
         $version(nuget) "\" "]
 
@@ -533,6 +545,12 @@ lappend patterns \
     [appendArgs " targetFramework=\"net46\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Core\\.MSIL\" version=\"" \
         $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.0\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.Core\\.MSIL\" version=\"" \
+        $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.Core\\.MSIL\" version=\"" \
+        $version(nuget) "\" "] \
     [appendArgs " targetFramework=\"net20\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Linq\" version=\"" $version(nuget) \
         "\" "] \
@@ -558,6 +576,9 @@ lappend patterns \
         "id=\"System\\.Data\\.SQLite\\.EF6\" version=\"" $version(nuget) \
         "\" "] \
     [appendArgs " targetFramework=\"net46\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.EF6\" version=\"" $version(nuget) \
+        "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
         "id=\"System\\.Data\\.SQLite\\.EF6\" version=\"" $version(nuget) \
         "\" "]
 
@@ -582,6 +603,12 @@ lappend patterns \
     [appendArgs " targetFramework=\"net46\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Core\\.MSIL\\.Beta\" version=\"" \
         $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.0\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.Core\\.MSIL\\.Beta\" version=\"" \
+        $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.Core\\.MSIL\\.Beta\" version=\"" \
+        $version(nuget) "\" "] \
     [appendArgs " targetFramework=\"net20\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Linq\\.Beta\" version=\"" \
         $version(nuget) "\" "] \
@@ -607,6 +634,9 @@ lappend patterns \
         "id=\"System\\.Data\\.SQLite\\.EF6\\.Beta\" version=\"" \
         $version(nuget) "\" "] \
     [appendArgs " targetFramework=\"net46\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.EF6\\.Beta\" version=\"" \
+        $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
         "id=\"System\\.Data\\.SQLite\\.EF6\\.Beta\" version=\"" \
         $version(nuget) "\" "]
 
@@ -631,6 +661,12 @@ lappend patterns \
     [appendArgs " targetFramework=\"net46\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Core\\.MSIL\\.Test\" version=\"" \
         $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.0\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.Core\\.MSIL\\.Test\" version=\"" \
+        $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.Core\\.MSIL\\.Test\" version=\"" \
+        $version(nuget) "\" "] \
     [appendArgs " targetFramework=\"net20\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Linq\\.Test\" version=\"" \
         $version(nuget) "\" "] \
@@ -656,6 +692,9 @@ lappend patterns \
         "id=\"System\\.Data\\.SQLite\\.EF6\\.Test\" version=\"" \
         $version(nuget) "\" "] \
     [appendArgs " targetFramework=\"net46\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.EF6\\.Test\" version=\"" \
+        $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
         "id=\"System\\.Data\\.SQLite\\.EF6\\.Test\" version=\"" \
         $version(nuget) "\" "]
 
@@ -678,6 +717,12 @@ lappend patterns \
         "id=\"System\\.Data\\.SQLite\\.Core\\.Test\" version=\"" \
         $version(nuget) "\" "] \
     [appendArgs " targetFramework=\"net46\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.Core\\.Test\" version=\"" \
+        $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.0\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.Core\\.Test\" version=\"" \
+        $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
         "id=\"System\\.Data\\.SQLite\\.Core\\.Test\" version=\"" \
         $version(nuget) "\" "] \
     [appendArgs " targetFramework=\"net20\".*? " \
@@ -708,6 +753,9 @@ lappend patterns \
         "id=\"System\\.Data\\.SQLite\\.EF6\\.Test\" version=\"" \
         $version(nuget) "\" "] \
     [appendArgs " targetFramework=\"netstandard2\\.0\".*? " \
+        "id=\"System\\.Data\\.SQLite\\.EF6\\.Test\" version=\"" \
+        $version(nuget) "\" "] \
+    [appendArgs " targetFramework=\"netstandard2\\.1\".*? " \
         "id=\"System\\.Data\\.SQLite\\.EF6\\.Test\" version=\"" \
         $version(nuget) "\" "]
 
@@ -1146,6 +1194,10 @@ set fileNames [list \
     [file join NuGet SQLite.nuspec] \
     [file join NuGet SQLite.nuspec] \
     [file join NuGet SQLite.nuspec] \
+    [file join NuGet SQLite.nuspec] \
+    [file join NuGet SQLite.nuspec] \
+    [file join NuGet SQLite.Beta.nuspec] \
+    [file join NuGet SQLite.Beta.nuspec] \
     [file join NuGet SQLite.Beta.nuspec] \
     [file join NuGet SQLite.Beta.nuspec] \
     [file join NuGet SQLite.Beta.nuspec] \
@@ -1201,6 +1253,12 @@ set fileNames [list \
     [file join NuGet SQLite.MSIL.nuspec] \
     [file join NuGet SQLite.MSIL.nuspec] \
     [file join NuGet SQLite.MSIL.nuspec] \
+    [file join NuGet SQLite.MSIL.nuspec] \
+    [file join NuGet SQLite.MSIL.nuspec] \
+    [file join NuGet SQLite.MSIL.nuspec] \
+    [file join NuGet SQLite.MSIL.Beta.nuspec] \
+    [file join NuGet SQLite.MSIL.Beta.nuspec] \
+    [file join NuGet SQLite.MSIL.Beta.nuspec] \
     [file join NuGet SQLite.MSIL.Beta.nuspec] \
     [file join NuGet SQLite.MSIL.Beta.nuspec] \
     [file join NuGet SQLite.MSIL.Beta.nuspec] \
@@ -1231,6 +1289,12 @@ set fileNames [list \
     [file join NuGet SQLite.MSIL.Test.nuspec] \
     [file join NuGet SQLite.MSIL.Test.nuspec] \
     [file join NuGet SQLite.MSIL.Test.nuspec] \
+    [file join NuGet SQLite.MSIL.Test.nuspec] \
+    [file join NuGet SQLite.MSIL.Test.nuspec] \
+    [file join NuGet SQLite.MSIL.Test.nuspec] \
+    [file join NuGet SQLite.Test.nuspec] \
+    [file join NuGet SQLite.Test.nuspec] \
+    [file join NuGet SQLite.Test.nuspec] \
     [file join NuGet SQLite.Test.nuspec] \
     [file join NuGet SQLite.Test.nuspec] \
     [file join NuGet SQLite.Test.nuspec] \
